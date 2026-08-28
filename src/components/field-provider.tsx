@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFieldEngine, type FieldEngine, type SceneRequest } from "@/gpu/engine";
 import type { Project } from "@/lib/projects";
@@ -17,6 +18,8 @@ export function FieldProvider({
   projects: Project[];
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const inLab = pathname.startsWith("/lab");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<FieldEngine | null>(null);
   const pendingRef = useRef<SceneRequest | null>(null);
@@ -25,7 +28,7 @@ export function FieldProvider({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || inLab) return;
 
     // No synchronous WebGPU branch here: the engine already resolves `ready`
     // to false when WebGPU is missing, and setting state synchronously inside
@@ -48,7 +51,7 @@ export function FieldProvider({
       setEngine(null);
       created.dispose();
     };
-  }, [projects]);
+  }, [projects, inLab]);
 
   const value = useMemo<FieldControl>(
     () => ({
@@ -69,12 +72,13 @@ export function FieldProvider({
     <FieldContext.Provider value={value}>
       <canvas
         ref={canvasRef}
+        hidden={inLab}
         className="field-canvas"
         aria-hidden
         // The field is decorative; every project it depicts is also a link in
         // the DOM, so nothing here is the only route to the content.
       />
-      {status === "unsupported" ? <StaticField /> : null}
+      {status === "unsupported" && !inLab ? <StaticField /> : null}
       {children}
     </FieldContext.Provider>
   );

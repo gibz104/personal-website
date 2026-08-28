@@ -23,6 +23,9 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // The concept pages carry their own minimal chrome.
+  if (pathname.startsWith("/lab")) return null;
+
   return (
     <header
       className={`pointer-events-none fixed inset-x-0 top-0 z-30 transition-colors duration-300 ${
