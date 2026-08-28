@@ -20,8 +20,15 @@ export const metadata: Metadata = {
     title: PROFILE.name,
     description: PROFILE.tagline,
     type: "website",
+    // A real settled frame of the field, rendered by `npm run poster`.
+    images: [{ url: "/field-poster.jpg", width: 1920, height: 1080, alt: "The field" }],
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    title: PROFILE.name,
+    description: PROFILE.tagline,
+    images: ["/field-poster.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
