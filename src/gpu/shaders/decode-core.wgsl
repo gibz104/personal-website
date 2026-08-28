@@ -23,6 +23,49 @@ export fn glint(cellId: vec2f, time: f32) -> f32 {
   return isGlinter * exp(-phase * 16.0);
 }
 
+/// A sampled cell, split so callers can light it themselves.
+export struct CellSample {
+  /// Unlit colour of the glyph.
+  tint: vec3f,
+  /// Glyph coverage at this pixel.
+  ink: f32,
+  /// 0 while scrambled, 1 once resolved.
+  decoded: f32,
+}
+
+/// Samples one cell of the page at reveal level `reveal` (0..1).
+export fn sampleCell(
+  atlas: texture_2d<f32>,
+  samp: sampler,
+  grid: texture_2d<u32>,
+  p: vec2f,
+  reveal: f32,
+  time: f32,
+) -> CellSample {
+  let cellId = floor(p / CELL);
+  let inCell = fract(p / CELL);
+  let data = cellAt(grid, p);
+
+  let cellHash = hash2(cellId * 0.1373 + vec2f(11.7, 3.9));
+  let total = clamp(max(reveal, glint(cellId, time) * 0.92), 0.0, 1.0);
+
+  let threshold = 0.05 + cellHash.x * 0.52;
+  let decoded = smoothstep(threshold - 0.10, threshold + 0.10, total);
+
+  let churn = hash2(cellId + floor(vec2f(time * 9.0 + cellHash.y * 20.0)));
+  let scrambled = u32(clamp(churn.x, 0.0, 0.999) * 94.0);
+  let index = select(scrambled, data.x, decoded > 0.5);
+
+  let sparse = step(0.46, cellHash.y);
+  let present = max(sparse, decoded);
+
+  var out: CellSample;
+  out.ink = glyphCoverage(atlas, samp, index, inCell) * present;
+  out.tint = mix(vec3f(0.30, 0.36, 0.47), tokenColor(data.y), decoded);
+  out.decoded = decoded;
+  return out;
+}
+
 /// Renders one cell of the page at reveal level `reveal` (0..1).
 export fn renderCell(
   atlas: texture_2d<f32>,
@@ -72,20 +115,20 @@ export fn renderCell(
   return color;
 }
 
-/// The scan bar: a hard edge of light that sweeps the page, decoding and
-/// illuminating as it passes and leaving an afterglow behind it.
+/// The scan band: a soft front of decoding that travels down the page.
 ///
-/// This is back by request. It stopped being redundant the moment the pointer
-/// gave up revealing — decoding is now the page's own behaviour, and the
-/// pointer does something else entirely.
-export fn scanBar(y: f32, height: f32, time: f32, period: f32) -> f32 {
+/// Deliberately edgeless. An earlier version drew a bright leading line, which
+/// announced the mechanism — you watched a bar go past instead of noticing the
+/// text had resolved. Gradients only: it should read as the page coming into
+/// focus, never as something sweeping across it.
+export fn scanBand(y: f32, height: f32, time: f32, period: f32) -> f32 {
   let phase = fract(time / period);
-  let barY = phase * (height * 1.30) - height * 0.15;
-  let d = barY - y;
-  // Bright leading edge, long trailing glow above it.
-  let edge = exp(-abs(d) / (height * 0.009));
-  let wake = exp(-max(d, 0.0) / (height * 0.22)) * step(0.0, d);
-  return max(edge, wake * 0.62);
+  let frontY = phase * (height * 1.4) - height * 0.2;
+  // A symmetric gaussian, narrow enough that most of the page stays scrambled.
+  // A long trailing wake decodes nearly everything above the front, which
+  // leaves nothing to explore.
+  let d = (y - frontY) / (height * 0.105);
+  return exp(-d * d) * 0.94;
 }
 
 /// Falling one-character-wide columns of decode. Returns (decode, headGlow).

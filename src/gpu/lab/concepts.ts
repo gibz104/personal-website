@@ -4,7 +4,7 @@ import type { ConceptId } from "./shaders";
 export type Concept = {
   id: ConceptId;
   name: string;
-  /** The verb. What the pointer actually does. */
+  /** What the light is doing. */
   verb: string;
   summary: string;
   detail: string;
@@ -13,55 +13,59 @@ export type Concept = {
 };
 
 /**
- * Every variant shares the same page behaviour — the code scrolls, a scan bar
- * sweeps it, drops fall through it, characters glint. What differs is the one
- * thing the pointer is for. None of them reveals.
+ * Every variant shares the same page: the code scrolls, a soft band of decoding
+ * travels through it, one-character drops fall, characters glint. No bar, no
+ * beam, nothing to watch go past.
+ *
+ * What differs is where the light comes from and how it gives the page depth.
+ * In all three the pointer only ever nudges the source a fraction of the
+ * viewport — it never carries it.
  */
 export const CONCEPTS: Concept[] = [
   {
-    id: "lantern",
-    name: "Lantern",
-    verb: "Illuminate",
-    summary: "The pointer is a light, not a window.",
+    id: "relief",
+    name: "Relief",
+    verb: "One soft key light",
+    summary: "The text stops being flat.",
     detail:
-      "The page decodes on its own. What the pointer controls is the lighting: shafts are marched through the glyphs toward the cursor, so the gaps between characters become beams and lit code burns in its syntax colour.",
+      "A single soft light sits roughly overhead. Each character gets a pseudo-normal from its own coverage gradient, so its strokes catch the light on the side facing it and fall away on the other. The pointer tilts the light a fraction of the viewport — the page seems to turn toward you.",
     layers: [
-      "Volumetric shafts through the characters, following the cursor",
-      "A scan bar sweeps the page and lights it as it decodes",
-      "Drops fall continuously, one character wide",
-      "The code scrolls; single characters glint on their own",
+      "Characters are embossed by a key light that never moves far",
+      "A thin edge catch where strokes face the source",
+      "The pointer tilts the light; it does not carry it",
+      "Scrolling code, a soft decode band, drops and glints",
     ],
-    tuning: { decay: 0.94, radius: 0.10, strength: 0.55, clickRadius: 0.18, spread: 0 },
+    tuning: { decay: 0.93, radius: 0.09, strength: 0.35, clickRadius: 0.14, spread: 0 },
   },
   {
-    id: "wake",
-    name: "Wake",
-    verb: "Disturb",
-    summary: "The pointer drags the stream out of line.",
+    id: "strata",
+    name: "Strata",
+    verb: "Depth by parallax",
+    summary: "Three planes of code, sliding against each other.",
     detail:
-      "The page is a falling column of text. Moving through it bends the characters around the cursor and they swing back once you leave. Faster movement tears harder, and the shear glows where the flow is worked most.",
+      "The code lives on three sheets at different scales. The pointer moves the viewpoint rather than the content, so the planes slide against one another and the page gains thickness. The key light falls off with depth, leaving the far sheets in cool shadow.",
     layers: [
-      "Characters bend and swirl around the cursor",
-      "Speed changes the drag — a flick tears, a slow pass leans",
-      "The shear itself catches light where the flow is worked",
-      "Scan bar, drops, scrolling and glints carry the reading",
+      "Three planes at different scales and depths",
+      "The pointer leans the viewpoint, and the planes part",
+      "Distance cools and dims — the far sheets sit back",
+      "Only the front sheet decodes fully, so the eye knows where to look",
     ],
-    tuning: { decay: 0.93, radius: 0.09, strength: 0.45, clickRadius: 0.16, spread: 0 },
+    tuning: { decay: 0.93, radius: 0.09, strength: 0.30, clickRadius: 0.14, spread: 0 },
   },
   {
-    id: "charge",
-    name: "Charge",
-    verb: "Kindle",
-    summary: "The pointer plants fires that keep burning after you go.",
+    id: "emitters",
+    name: "Emitters",
+    verb: "The code is the light",
+    summary: "Nothing shines on the page from outside.",
     detail:
-      "Moving deposits energy into a field that bleeds outward and decays. Where it crosses the ignition threshold a cell catches — it resolves, flares, and hands charge to its neighbours, so a stroke keeps spreading once you have moved on.",
+      "The band of decoding is a soft area light travelling through the page, each falling drop is a small moving one, and resolved characters glow on their own. The pointer adds one more soft source that it carries but never sharpens.",
     layers: [
-      "Charge spreads outward from your path on its own",
-      "Ignition is a threshold, so it reads as fire travelling",
-      "Embers run hot at the front and cool behind it",
-      "Scan bar, drops, scrolling and glints carry the reading",
+      "Light comes only from what the page is currently doing",
+      "Resolved characters pool their own colour beneath them",
+      "The decode band is a body of light, not an edge",
+      "The pointer is a hand cupped near the page, not a torch",
     ],
-    tuning: { decay: 0.975, radius: 0.075, strength: 1.0, clickRadius: 0.13, spread: 0.42 },
+    tuning: { decay: 0.94, radius: 0.10, strength: 0.40, clickRadius: 0.16, spread: 0 },
   },
 ];
 

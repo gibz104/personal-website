@@ -17,7 +17,7 @@ function arg(name: string, fallback: string): string {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback;
 }
 
-const concept = arg("concept", "lantern");
+const concept = arg("concept", "relief");
 const width = Number(arg("width", "1440"));
 const height = Number(arg("height", "900"));
 const time = Number(arg("time", "8"));

@@ -18,10 +18,11 @@ export default function LabIndex() {
           Three ways in.
         </h1>
         <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
-          Same page in all three: the code scrolls, a scan bar sweeps and lights
-          it, drops fall through it, characters glint. The page reads itself.
-          What differs is the one thing the pointer is for — and none of the
-          three uses it to reveal.
+          Same page in all three: the code scrolls, a soft band of decoding
+          travels through it, drops fall, characters glint. No bar, no beam,
+          nothing to watch go past. What differs is where the light comes from —
+          and in all three the pointer only nudges it a fraction of the
+          viewport. It never carries it.
         </p>
 
         <ul className="mt-16 space-y-16">
