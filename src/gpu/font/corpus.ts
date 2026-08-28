@@ -1,19 +1,23 @@
 /**
  * The code that lives inside the artwork.
  *
- * Deliberately generic: it is flavour, not content. Nothing here is read from
- * the repositories, so adding or removing a project never changes the art.
- * The languages are the ones the site's author actually writes, which is enough
- * to signal "developer" without encoding anything.
+ * Three rules shape it:
+ *
+ *  1. Nothing is read from the repositories. Adding or removing a project must
+ *     never change the art.
+ *  2. The language mix is the author's actual fluency, and the weights below
+ *     decide how much of the screen each one occupies. Python dominates because
+ *     he writes it by heart; C is a thin seam because it is mostly assisted.
+ *  3. A handful of lines quietly say whose site this is. They are rare enough
+ *     to be a find rather than a billboard.
  */
 
-/** Token classes drive colour in the shaders. */
 export const TOKEN = {
   punctuation: 0,
-  rust: 1,
+  python: 1,
   typescript: 2,
-  python: 3,
-  cpp: 4,
+  rust: 3,
+  c: 4,
   keyword: 5,
   string: 6,
   literal: 7,
@@ -21,99 +25,145 @@ export const TOKEN = {
 
 export type TokenClass = (typeof TOKEN)[keyof typeof TOKEN];
 
-/** Matches the language accents used elsewhere on the site. */
-export const TOKEN_COLORS: Record<number, readonly [number, number, number]> = {
-  [TOKEN.punctuation]: [0.42, 0.48, 0.60],
-  [TOKEN.rust]: [1.0, 0.46, 0.18],
-  [TOKEN.typescript]: [0.32, 0.72, 1.0],
-  [TOKEN.python]: [0.42, 0.92, 0.74],
-  [TOKEN.cpp]: [0.78, 0.48, 1.0],
-  [TOKEN.keyword]: [0.94, 0.96, 1.0],
-  [TOKEN.string]: [1.0, 0.80, 0.42],
-  [TOKEN.literal]: [0.55, 0.95, 0.95],
+export type Language = "python" | "typescript" | "rust" | "c";
+
+/**
+ * Share of the field each language occupies. This is the one piece of real
+ * information encoded in the artwork, and it is about the person, not the
+ * portfolio — so it stays true no matter what he ships next.
+ */
+export const LANGUAGE_WEIGHT: Record<Language, number> = {
+  python: 0.42,
+  typescript: 0.30,
+  rust: 0.17,
+  c: 0.11,
+};
+
+export const LANGUAGE_TOKEN: Record<Language, TokenClass> = {
+  python: TOKEN.python,
+  typescript: TOKEN.typescript,
+  rust: TOKEN.rust,
+  c: TOKEN.c,
 };
 
 const KEYWORDS = new Set([
-  "pub", "async", "fn", "let", "mut", "impl", "for", "match", "if", "else",
-  "return", "struct", "enum", "trait", "use", "await", "const", "static",
-  "export", "function", "type", "interface", "await", "new", "throw", "class",
-  "def", "self", "import", "from", "with", "yield", "raise", "try", "except",
-  "void", "auto", "template", "typename", "namespace", "nullptr", "size_t",
-  "unsafe", "where", "loop", "while", "in", "as", "dyn", "move", "ref",
+  // python
+  "def", "async", "await", "class", "self", "import", "from", "return", "with",
+  "for", "in", "if", "else", "elif", "try", "except", "finally", "yield",
+  "lambda", "raise", "while", "not", "and", "or", "None", "True", "False",
+  // typescript
+  "export", "const", "let", "function", "type", "interface", "new", "throw",
+  "extends", "implements", "readonly", "satisfies", "as", "of", "void",
+  // rust
+  "pub", "fn", "impl", "trait", "struct", "enum", "match", "mut", "use", "mod",
+  "where", "loop", "unsafe", "dyn", "move", "ref", "Some", "Ok", "Err",
+  // c
+  "static", "sizeof", "typedef", "struct", "const", "unsigned", "int", "char",
+  "size_t", "NULL", "goto", "switch", "case", "break", "continue",
 ]);
 
-type Line = { text: string; language: TokenClass };
+type Line = {
+  text: string;
+  lang: Language;
+  /** Rare lines that name the author. */
+  identity?: boolean;
+  /** The same operation, written four ways. */
+  rosetta?: boolean;
+};
 
 const LINES: Line[] = [
-  { language: TOKEN.rust, text: 'pub async fn index(&self, block: BlockNumber) -> Result<Receipt> {' },
-  { language: TOKEN.rust, text: '    let mut tx = self.db.begin_rw()?;' },
-  { language: TOKEN.rust, text: '    tracing::info!(target: "exex", ?block, "committed");' },
-  { language: TOKEN.rust, text: 'impl ExExContext for Indexer {' },
-  { language: TOKEN.rust, text: '    match notification {' },
-  { language: TOKEN.rust, text: '        Notification::ChainCommitted { new } => self.apply(new)?,' },
-  { language: TOKEN.rust, text: '        Notification::ChainReverted { old } => self.revert(old)?,' },
-  { language: TOKEN.rust, text: '    let cursor = tx.cursor_read::<tables::Headers>()?;' },
-  { language: TOKEN.rust, text: '#[derive(Debug, Clone, PartialEq)]' },
-  { language: TOKEN.rust, text: '    while let Some((number, header)) = cursor.next()? {' },
+  // ---- the rosetta motif: one idea, four languages -----------------------
+  { lang: "python", rosetta: true, text: 'async for event in stream:' },
+  { lang: "python", rosetta: true, text: '    await index.write(event)' },
+  { lang: "typescript", rosetta: true, text: 'for await (const event of stream) await index.write(event);' },
+  { lang: "rust", rosetta: true, text: 'while let Some(event) = stream.next().await { index.write(event).await?; }' },
+  { lang: "c", rosetta: true, text: 'while (stream_next(&s, &ev) == 0) index_write(&ix, &ev);' },
 
-  { language: TOKEN.typescript, text: 'export async function sync(client: Client): Promise<Spool[]> {' },
-  { language: TOKEN.typescript, text: '    const { data, error } = await client.from("spools").select();' },
-  { language: TOKEN.typescript, text: 'type Reading = { moisture: number; lux: number; at: string };' },
-  { language: TOKEN.typescript, text: '    if (!res.ok) throw new Error(`HTTP ${res.status}`);' },
-  { language: TOKEN.typescript, text: 'export const revalidate = 300;' },
-  { language: TOKEN.typescript, text: '    return rows.map((row) => ({ ...row, usedGrams: row.used * 1000 }));' },
-  { language: TOKEN.typescript, text: 'interface Standings { team: string; wins: number; diff: number }' },
-  { language: TOKEN.typescript, text: '    const sorted = table.sort((a, b) => b.wins - a.wins || b.diff - a.diff);' },
+  // ---- identity: whose site this is --------------------------------------
+  { lang: "python", identity: true, text: 'AUTHOR = "Ross Gibson"   # rossgibson.dev' },
+  { lang: "python", identity: true, text: 'LOCATION, HANDLE = "Chicago, IL", "gibz104"' },
+  { lang: "typescript", identity: true, text: 'export const site = { domain: "rossgibson.dev", handle: "gibz104" };' },
+  { lang: "rust", identity: true, text: 'const AUTHOR: &str = "Ross Gibson";' },
+  { lang: "c", identity: true, text: '#define SITE_HOST "rossgibson.dev"' },
+  { lang: "python", identity: true, text: 'WRITES = ("python", "typescript", "rust", "c")' },
 
-  { language: TOKEN.python, text: 'async def poll(self, interval: float = 30.0) -> None:' },
-  { language: TOKEN.python, text: '    df = pl.read_parquet(path).filter(pl.col("gas") > 21_000)' },
-  { language: TOKEN.python, text: '@dataclass(frozen=True)' },
-  { language: TOKEN.python, text: 'class Gateway(mqtt.Client):' },
-  { language: TOKEN.python, text: '    async with session.get(url, timeout=10) as response:' },
-  { language: TOKEN.python, text: '    return {addr: reading for addr, reading in sensors.items()}' },
-  { language: TOKEN.python, text: '    logger.info("published %s to %s", payload, topic)' },
+  // ---- python (most of the field) ----------------------------------------
+  { lang: "python", text: 'async def poll(self, interval: float = 30.0) -> None:' },
+  { lang: "python", text: '    async with session.get(url, timeout=10) as response:' },
+  { lang: "python", text: '        payload = await response.json()' },
+  { lang: "python", text: 'df = pl.read_parquet(path).filter(pl.col("gas") > 21_000)' },
+  { lang: "python", text: '@dataclass(frozen=True)' },
+  { lang: "python", text: 'class Gateway(mqtt.Client):' },
+  { lang: "python", text: '    def on_message(self, client, userdata, message) -> None:' },
+  { lang: "python", text: '    return {addr: reading for addr, reading in sensors.items()}' },
+  { lang: "python", text: '    logger.info("published %s to %s", payload, topic)' },
+  { lang: "python", text: 'with contextlib.suppress(asyncio.CancelledError):' },
+  { lang: "python", text: '    yield from (row for row in cursor if row.value is not None)' },
+  { lang: "python", text: 'def moving_average(xs: Sequence[float], window: int) -> list[float]:' },
+  { lang: "python", text: '    return [sum(xs[i : i + window]) / window for i in range(len(xs) - window)]' },
+  { lang: "python", text: 'if __name__ == "__main__":' },
+  { lang: "python", text: '    asyncio.run(main())' },
+  { lang: "python", text: 'raise ValueError(f"unknown topic: {topic!r}")' },
+  { lang: "python", text: '    conn.execute("insert into readings values (?, ?, ?)", row)' },
 
-  { language: TOKEN.cpp, text: 'esp_err_t ota_begin(const char *url, size_t len) {' },
-  { language: TOKEN.cpp, text: '    static void IRAM_ATTR on_timer(void *arg) {' },
-  { language: TOKEN.cpp, text: '    if (esp_ota_set_boot_partition(part) != ESP_OK) {' },
-  { language: TOKEN.cpp, text: '    xTaskCreatePinnedToCore(loop, "sensor", 4096, nullptr, 5, &task, 1);' },
-  { language: TOKEN.cpp, text: '    ESP_LOGI(TAG, "rollback armed, booting slot %d", slot);' },
-  { language: TOKEN.cpp, text: '    adc_oneshot_read(handle, ADC_CHANNEL_3, &raw);' },
+  // ---- typescript ---------------------------------------------------------
+  { lang: "typescript", text: 'export async function sync(client: Client): Promise<Spool[]> {' },
+  { lang: "typescript", text: '    const { data, error } = await client.from("spools").select();' },
+  { lang: "typescript", text: 'type Reading = { moisture: number; lux: number; at: string };' },
+  { lang: "typescript", text: '    if (!res.ok) throw new Error(`HTTP ${res.status}`);' },
+  { lang: "typescript", text: '    return rows.map((row) => ({ ...row, grams: row.used * 1000 }));' },
+  { lang: "typescript", text: 'const sorted = table.sort((a, b) => b.wins - a.wins || b.diff - a.diff);' },
+  { lang: "typescript", text: 'export const revalidate = 300;' },
+  { lang: "typescript", text: 'const gpu = await init(); const output = surface(gpu, canvas);' },
+  { lang: "typescript", text: 'useEffect(() => engine.dispose, [engine]);' },
+  { lang: "typescript", text: 'interface Standings { team: string; wins: number; diff: number }' },
+  { lang: "typescript", text: '    frame.pass({ target: scene }, (p) => p.draw(effect));' },
 
-  { language: TOKEN.typescript, text: 'const gpu = await init(); const surface = surface(gpu, canvas);' },
-  { language: TOKEN.typescript, text: '@compute @workgroup_size(64) fn cs_main(@builtin(global_invocation_id) id: vec3u)' },
-  { language: TOKEN.rust, text: '// rust · typescript · python · c++ · wgsl · webgpu' },
+  // ---- rust ---------------------------------------------------------------
+  { lang: "rust", text: 'pub async fn index(&self, block: BlockNumber) -> Result<Receipt> {' },
+  { lang: "rust", text: '    let mut tx = self.db.begin_rw()?;' },
+  { lang: "rust", text: 'impl ExExContext for Indexer {' },
+  { lang: "rust", text: '    match notification {' },
+  { lang: "rust", text: '        Notification::ChainCommitted { new } => self.apply(new)?,' },
+  { lang: "rust", text: '#[derive(Debug, Clone, PartialEq)]' },
+  { lang: "rust", text: '    let cursor = tx.cursor_read::<tables::Headers>()?;' },
+  { lang: "rust", text: '    tracing::info!(target: "exex", ?block, "committed");' },
+
+  // ---- c ------------------------------------------------------------------
+  { lang: "c", text: 'esp_err_t ota_begin(const char *url, size_t len) {' },
+  { lang: "c", text: 'static void IRAM_ATTR on_timer(void *arg) {' },
+  { lang: "c", text: '    if (esp_ota_set_boot_partition(part) != ESP_OK) return ESP_FAIL;' },
+  { lang: "c", text: '    ESP_LOGI(TAG, "rollback armed, booting slot %d", slot);' },
+  { lang: "c", text: '    adc_oneshot_read(handle, ADC_CHANNEL_3, &raw);' },
 ];
 
-/** One character with its colour class. */
 export type Cell = { char: number; token: number };
 
 /** Cheap, deterministic highlighter — enough to read as syntax at a glance. */
 function classify(line: Line): Cell[] {
   const out: Cell[] = [];
   const text = line.text;
-  let inString: string | null = null;
-  let commentFrom = -1;
+  const base = LANGUAGE_TOKEN[line.lang];
 
-  const commentIndex = Math.max(
-    text.indexOf("//") >= 0 ? text.indexOf("//") : -1,
-    text.indexOf("# ") >= 0 ? text.indexOf("# ") : -1,
-  );
-  if (commentIndex >= 0) commentFrom = commentIndex;
+  let inString: string | null = null;
+  const hash = text.indexOf("# ");
+  const slashes = text.indexOf("//");
+  const commentFrom = hash >= 0 ? hash : slashes;
 
   let word = "";
   let wordStart = 0;
 
-  const flushWord = (end: number) => {
+  const flushWord = () => {
     if (!word) return;
     const token = KEYWORDS.has(word)
       ? TOKEN.keyword
       : /^[0-9_]+$/.test(word)
         ? TOKEN.literal
-        : line.language;
-    for (let i = 0; i < word.length; i++) out[wordStart + i] = { char: text.charCodeAt(wordStart + i), token };
+        : base;
+    for (let i = 0; i < word.length; i++) {
+      out[wordStart + i] = { char: text.charCodeAt(wordStart + i), token };
+    }
     word = "";
-    void end;
   };
 
   for (let i = 0; i < text.length; i++) {
@@ -130,7 +180,7 @@ function classify(line: Line): Cell[] {
       continue;
     }
     if (ch === '"' || ch === "'" || ch === "`") {
-      flushWord(i);
+      flushWord();
       inString = ch;
       out[i] = { char: code, token: TOKEN.string };
       continue;
@@ -138,15 +188,33 @@ function classify(line: Line): Cell[] {
     if (/[A-Za-z0-9_]/.test(ch)) {
       if (!word) wordStart = i;
       word += ch;
-      out[i] = { char: code, token: line.language };
+      out[i] = { char: code, token: base };
       continue;
     }
-    flushWord(i);
+    flushWord();
     out[i] = { char: code, token: TOKEN.punctuation };
   }
-  flushWord(text.length);
-
+  flushWord();
   return out;
 }
 
-export const CODE_LINES: Cell[][] = LINES.map(classify);
+export type CorpusLine = {
+  cells: Cell[];
+  lang: Language;
+  identity: boolean;
+  rosetta: boolean;
+};
+
+export const CODE_LINES: CorpusLine[] = LINES.map((line) => ({
+  cells: classify(line),
+  lang: line.lang,
+  identity: line.identity ?? false,
+  rosetta: line.rosetta ?? false,
+}));
+
+export const LINES_BY_LANGUAGE: Record<Language, CorpusLine[]> = {
+  python: CODE_LINES.filter((l) => l.lang === "python"),
+  typescript: CODE_LINES.filter((l) => l.lang === "typescript"),
+  rust: CODE_LINES.filter((l) => l.lang === "rust"),
+  c: CODE_LINES.filter((l) => l.lang === "c"),
+};

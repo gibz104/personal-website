@@ -53,7 +53,16 @@ export default async function ConceptPage({ params }: PageProps<"/lab/[concept]"
           <p className="mt-4 text-[0.9375rem] leading-relaxed text-muted">
             {found.detail}
           </p>
-          <p className="tag mt-5">{found.interaction}</p>
+          <ul className="mt-5 space-y-1.5">
+            {found.layers.map((layer) => (
+              <li key={layer} className="tag flex gap-2.5 normal-case tracking-normal">
+                <span aria-hidden className="text-dim">
+                  ·
+                </span>
+                <span>{layer}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

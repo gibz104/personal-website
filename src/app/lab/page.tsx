@@ -18,9 +18,9 @@ export default function LabIndex() {
           Three ways in.
         </h1>
         <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
-          Each is a full-screen WebGPU hero with code baked into the artwork —
-          independent of the project list, so adding or removing a repository
-          never changes it. Open one and move the pointer.
+          Same field, three interaction models. The automatic sweep is gone —
+          nothing reveals a line for free any more. What is left are layers that
+          each do a different job, so none of them makes another pointless.
         </p>
 
         <ul className="mt-16 space-y-16">
@@ -51,7 +51,16 @@ export default function LabIndex() {
                     <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
                       {concept.summary}
                     </p>
-                    <p className="tag mt-3">{concept.interaction}</p>
+                    <ul className="mt-4 space-y-1.5">
+                      {concept.layers.map((layer) => (
+                        <li key={layer} className="tag flex gap-2.5 normal-case tracking-normal">
+                          <span aria-hidden className="text-dim">
+                            ·
+                          </span>
+                          <span>{layer}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                   <span className="tag shrink-0 transition-colors group-hover:text-muted">
                     Open live →

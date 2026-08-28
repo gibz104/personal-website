@@ -1,6 +1,7 @@
 import type { Gpu, Surface } from "vgpu";
 import { createLabPipeline, type LabPipeline } from "./pipeline";
 import { CONCEPT_SHADERS, LAB_SHARED, type ConceptId } from "./shaders";
+import { conceptById } from "./concepts";
 import { isWebGPUAvailable, prefersReducedMotion } from "../engine";
 
 export type LabEngine = {
@@ -28,9 +29,17 @@ export function createLabEngine(
   let pointerGoal = 0;
   // Starts large so the click wave is off screen until someone actually clicks.
   let clickAge = 999;
+  let click: [number, number] = [-9999, -9999];
+  let previousPointer: [number, number] = [0, 0];
+  let speed = 0;
+  let dwell = 0;
+  let pinnedRow = -1;
   let intro = 0;
   let elapsed = 0;
   let last = 0;
+
+  // Matches CELL in the shaders: rows are 20 backing pixels tall.
+  const CELL_HEIGHT = 20;
 
   function measure() {
     const rect = canvas.getBoundingClientRect();
@@ -64,6 +73,9 @@ export function createLabEngine(
   const onPointerDown = (event: PointerEvent) => {
     onPointerMove(event);
     clickAge = 0;
+    click = [...pointer];
+    // Focus pins the row that was clicked; the others ignore it.
+    pinnedRow = Math.floor(pointer[1] / CELL_HEIGHT);
   };
 
   function tick(now: number) {
@@ -78,16 +90,28 @@ export function createLabEngine(
     intro = Math.min(1, intro + dt * 0.7);
     pointerActive += (pointerGoal - pointerActive) * (1 - Math.exp(-dt * 6));
 
+    // Speed drives the brush width; dwell rewards holding still.
+    const moved = Math.hypot(pointer[0] - previousPointer[0], pointer[1] - previousPointer[1]);
+    speed += (moved / Math.max(dt, 1e-4) - speed) * (1 - Math.exp(-dt * 8));
+    dwell = Math.max(0, Math.min(1, dwell + (moved < 1.5 ? dt * 0.75 : -dt * 3.2)));
+
     // Reduced motion: compose a frame, then hold it.
     if (reduced && elapsed > 5) return;
 
     pipeline.render({
       time: elapsed,
       pointer,
+      previousPointer,
+      click,
       pointerActive,
       clickAge,
+      dwell,
+      speed,
+      pinnedRow,
       intro,
     });
+
+    previousPointer = [...pointer];
   }
 
   async function start(): Promise<boolean> {
@@ -113,6 +137,7 @@ export function createLabEngine(
       api,
       scene: CONCEPT_SHADERS[concept],
       shaders: LAB_SHARED,
+      tuning: conceptById(concept)!.tuning,
       output,
     });
     applySize();
