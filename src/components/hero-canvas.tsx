@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createLabEngine } from "@/gpu/lab/engine";
-import type { ConceptId } from "@/gpu/lab/shaders";
+import { createHeroEngine } from "@/gpu/hero/engine";
 
-/** Mounts one concept shader on a full-bleed canvas. */
-export function LabCanvas({ concept }: { concept: ConceptId }) {
+/** Mounts one hero variant on a full-bleed canvas. */
+export function HeroCanvas({ variant }: { variant: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const engine = createLabEngine(canvas, concept);
+    const engine = createHeroEngine(canvas, variant);
     let cancelled = false;
     void engine.ready.then((ok) => {
       if (!cancelled && !ok) setFailed(true);
@@ -21,7 +20,7 @@ export function LabCanvas({ concept }: { concept: ConceptId }) {
       cancelled = true;
       engine.dispose();
     };
-  }, [concept]);
+  }, [variant]);
 
   return (
     <>

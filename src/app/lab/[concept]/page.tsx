@@ -1,39 +1,37 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LabCanvas } from "@/components/lab-canvas";
-import { CONCEPTS, conceptById } from "@/gpu/lab/concepts";
+import { HeroCanvas } from "@/components/hero-canvas";
+import { HERO_VARIANTS, heroVariantById } from "@/gpu/hero/presets";
 
 export function generateStaticParams() {
-  return CONCEPTS.map((c) => ({ concept: c.id }));
+  return HERO_VARIANTS.map((v) => ({ concept: v.id }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/lab/[concept]">) {
   const { concept } = await params;
-  const found = conceptById(concept);
+  const found = heroVariantById(concept);
   return found ? { title: found.name } : {};
 }
 
-export default async function ConceptPage({ params }: PageProps<"/lab/[concept]">) {
+export default async function HeroPage({ params }: PageProps<"/lab/[concept]">) {
   const { concept } = await params;
-  const found = conceptById(concept);
+  const found = heroVariantById(concept);
   if (!found) notFound();
 
-  const index = CONCEPTS.findIndex((c) => c.id === found.id);
-  const next = CONCEPTS[(index + 1) % CONCEPTS.length]!;
+  const index = HERO_VARIANTS.findIndex((v) => v.id === found.id);
+  const next = HERO_VARIANTS[(index + 1) % HERO_VARIANTS.length]!;
 
   return (
     <div className="relative min-h-svh overflow-hidden bg-ink">
-      <LabCanvas concept={found.id} />
+      <HeroCanvas variant={found.id} />
 
-      {/* Everything below floats over the canvas and stays pointer-transparent
-          except the links, so the whole surface remains interactive. */}
       <div className="pointer-events-none relative z-10 flex min-h-svh flex-col justify-between p-6 sm:p-10">
         <div className="flex items-start justify-between gap-6">
           <Link
             href="/lab"
             className="over-field pointer-events-auto tag transition-colors hover:text-muted"
           >
-            ← Concepts
+            ← Treatments
           </Link>
           <Link
             href={`/lab/${next.id}`}
@@ -44,25 +42,14 @@ export default async function ConceptPage({ params }: PageProps<"/lab/[concept]"
         </div>
 
         <div className="over-field max-w-md">
-          <p className="tag">
-            Concept {String(index + 1).padStart(2, "0")} · {found.verb}
-          </p>
+          <p className="tag">Treatment {String(index + 1).padStart(2, "0")}</p>
           <h1 className="mt-3 text-4xl font-medium tracking-tight sm:text-5xl">
             {found.name}
           </h1>
           <p className="mt-4 text-[0.9375rem] leading-relaxed text-muted">
             {found.detail}
           </p>
-          <ul className="mt-5 space-y-1.5">
-            {found.layers.map((layer) => (
-              <li key={layer} className="tag flex gap-2.5 normal-case tracking-normal">
-                <span aria-hidden className="text-dim">
-                  ·
-                </span>
-                <span>{layer}</span>
-              </li>
-            ))}
-          </ul>
+          <p className="tag mt-5">Move the pointer to carry the source</p>
         </div>
       </div>
     </div>

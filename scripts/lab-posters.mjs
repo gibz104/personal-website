@@ -1,22 +1,15 @@
-/** Renders a still of each concept for the selection index. */
+/** Renders a still of each hero treatment for the selection index. */
 import { execFileSync } from "node:child_process";
 import { existsSync, unlinkSync, mkdirSync } from "node:fs";
 
 mkdirSync("public/lab", { recursive: true });
 
-const shots = [
-  { id: "relief", px: "0.70", py: "0.30", time: "9", steps: "50", speed: "400" },
-  { id: "strata", px: "0.70", py: "0.30", time: "9", steps: "50", speed: "400" },
-  { id: "emitters", px: "0.70", py: "0.30", time: "9", steps: "50", speed: "400" },
-];
-
-for (const { id, px, py, time, steps, speed } of shots) {
+for (const id of ["halo", "rays", "edge"]) {
   const png = `public/lab/${id}.png`;
   const jpg = `public/lab/${id}.jpg`;
   execFileSync("npx", [
-    "tsx", "scripts/preview-lab.mts",
-    "--concept", id, "--px", px, "--py", py, "--time", time,
-    "--steps", steps, "--speed", speed,
+    "tsx", "scripts/preview-hero.mts",
+    "--variant", id, "--px", "0.46", "--py", "0.38",
     "--width", "1600", "--height", "1000", "--out", png,
   ], { stdio: "inherit" });
   try {
@@ -26,4 +19,4 @@ for (const { id, px, py, time, steps, speed } of shots) {
     // Keep the PNG where sips is unavailable.
   }
 }
-console.log("lab posters written");
+console.log("hero posters written");

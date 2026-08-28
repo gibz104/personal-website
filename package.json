@@ -12,8 +12,8 @@
     "preview": "tsx scripts/preview.mts",
     "poster": "node scripts/poster.mjs",
     "build:font": "node scripts/build-font.mjs",
-    "preview:lab": "tsx scripts/preview-lab.mts",
-    "lab:posters": "node scripts/lab-posters.mjs"
+    "lab:posters": "node scripts/lab-posters.mjs",
+    "preview:hero": "tsx scripts/preview-hero.mts"
   },
   "dependencies": {
     "next": "16.3.3",

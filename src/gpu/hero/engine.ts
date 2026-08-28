@@ -1,25 +1,32 @@
 import type { Gpu, Surface } from "vgpu";
-import { createLabPipeline, type LabPipeline } from "./pipeline";
-import { CONCEPT_SHADERS, LAB_SHARED, type ConceptId } from "./shaders";
-import { conceptById } from "./concepts";
 import { isWebGPUAvailable, prefersReducedMotion } from "../engine";
+import { createHeroPipeline, type HeroPipeline } from "./pipeline";
+import { heroVariantById, HERO_VARIANTS } from "./presets";
+import background from "../shaders/hero-bg.wgsl";
+import blur from "../shaders/blur.wgsl";
+import bright from "../shaders/bright.wgsl";
+import composite from "../shaders/hero-composite.wgsl";
+import flare from "../shaders/flare.wgsl";
 
-export type LabEngine = {
+export type HeroEngine = {
   readonly ready: Promise<boolean>;
   dispose(): void;
 };
 
-/** Drives one concept shader on one canvas. */
-export function createLabEngine(
+/** How long the scene runs before a reduced-motion viewer's frame is frozen. */
+const SETTLE_SECONDS = 6;
+
+export function createHeroEngine(
   canvas: HTMLCanvasElement,
-  concept: ConceptId,
-): LabEngine {
+  variantId: string,
+): HeroEngine {
+  const variant = heroVariantById(variantId) ?? HERO_VARIANTS[0]!;
   const reduced = prefersReducedMotion();
 
   let disposed = false;
   let gpu: Gpu | undefined;
   let output: Surface | undefined;
-  let pipeline: LabPipeline | undefined;
+  let pipeline: HeroPipeline | undefined;
   let raf = 0;
   let observer: ResizeObserver | undefined;
 
@@ -27,16 +34,10 @@ export function createLabEngine(
   let pointer: [number, number] = [0, 0];
   let pointerActive = 0;
   let pointerGoal = 0;
-  // Starts large so the click wave is off screen until someone actually clicks.
-  let clickAge = 999;
-  let click: [number, number] = [-9999, -9999];
-  let previousPointer: [number, number] = [0, 0];
-  let speed = 0;
   let intro = 0;
   let elapsed = 0;
   let last = 0;
 
-  // A fresh layout each visit, so the page is never the same twice.
   const gridSeed = Math.floor(Math.random() * 100_000) + 1;
 
   function measure() {
@@ -61,17 +62,11 @@ export function createLabEngine(
   const onPointerMove = (event: PointerEvent) => {
     const rect = canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    // The shader works in backing pixels, which is what the surface is sized in.
     pointer = [(event.clientX - rect.left) * dpr, (event.clientY - rect.top) * dpr];
     pointerGoal = 1;
   };
   const onLeave = () => {
     pointerGoal = 0;
-  };
-  const onPointerDown = (event: PointerEvent) => {
-    onPointerMove(event);
-    clickAge = 0;
-    click = [...pointer];
   };
 
   function tick(now: number) {
@@ -82,30 +77,12 @@ export function createLabEngine(
     const dt = last === 0 ? 1 / 60 : Math.min((now - last) / 1000, 1 / 20);
     last = now;
     elapsed += dt;
-    clickAge += dt;
     intro = Math.min(1, intro + dt * 0.7);
-    pointerActive += (pointerGoal - pointerActive) * (1 - Math.exp(-dt * 6));
+    pointerActive += (pointerGoal - pointerActive) * (1 - Math.exp(-dt * 5));
 
-    // Speed drives how hard the pointer works the field.
-    const moved = Math.hypot(pointer[0] - previousPointer[0], pointer[1] - previousPointer[1]);
-    speed += (moved / Math.max(dt, 1e-4) - speed) * (1 - Math.exp(-dt * 8));
+    if (reduced && elapsed > SETTLE_SECONDS) return;
 
-    // Reduced motion: compose a frame, then hold it.
-    if (reduced && elapsed > 5) return;
-
-    pipeline.render({
-      time: elapsed,
-      dt,
-      pointer,
-      previousPointer,
-      click,
-      pointerActive,
-      clickAge,
-      speed,
-      intro,
-    });
-
-    previousPointer = [...pointer];
+    pipeline.render({ time: elapsed, dt, pointer, pointerActive, intro });
   }
 
   async function start(): Promise<boolean> {
@@ -113,7 +90,7 @@ export function createLabEngine(
     const api = await import("vgpu");
     if (disposed) return false;
 
-    gpu = await api.init({ label: `lab-${concept}` });
+    gpu = await api.init({ label: `hero-${variant.id}` });
     if (disposed) {
       gpu.dispose();
       return false;
@@ -126,20 +103,24 @@ export function createLabEngine(
       dpr: [1, 2],
     });
 
-    pipeline = createLabPipeline({
+    pipeline = createHeroPipeline({
       gpu,
       api,
-      scene: CONCEPT_SHADERS[concept],
-      shaders: LAB_SHARED,
-      tuning: conceptById(concept)!.tuning,
-      gridSeed,
+      shaders: { background, flare, blur, bright, composite },
       output,
+      canvas: (w, h) => {
+        const surface = document.createElement("canvas");
+        surface.width = w;
+        surface.height = h;
+        return surface as never;
+      },
+      preset: variant.preset,
+      gridSeed,
     });
     applySize();
 
     if (!reduced) {
       window.addEventListener("pointermove", onPointerMove, { passive: true });
-      window.addEventListener("pointerdown", onPointerDown, { passive: true });
       document.documentElement.addEventListener("mouseleave", onLeave);
     }
 
@@ -150,7 +131,7 @@ export function createLabEngine(
   }
 
   const ready = start().catch((error: unknown) => {
-    console.error(`[lab:${concept}] initialisation failed`, error);
+    console.error(`[hero:${variant.id}] initialisation failed`, error);
     return false;
   });
 
@@ -162,7 +143,6 @@ export function createLabEngine(
       cancelAnimationFrame(raf);
       observer?.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerdown", onPointerDown);
       document.documentElement.removeEventListener("mouseleave", onLeave);
       try {
         pipeline?.dispose();

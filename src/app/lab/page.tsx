@@ -1,38 +1,36 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CONCEPTS } from "@/gpu/lab/concepts";
+import { HERO_VARIANTS } from "@/gpu/hero/presets";
 
-export const metadata = { title: "Hero concepts" };
+export const metadata = { title: "Hero treatments" };
 
 /**
- * A selection surface, not part of the site proper. Three candidate hero
- * treatments, each running the real shader. The stills are headless renders of
- * those same shaders, so the card and the page agree.
+ * A selection surface, not part of the site proper. Same composition in all
+ * three; only the light behind the mark differs.
  */
 export default function LabIndex() {
   return (
     <div className="min-h-svh bg-ink px-6 py-20 sm:px-10 sm:py-24">
       <div className="mx-auto max-w-6xl">
-        <p className="tag">Concepts</p>
+        <p className="tag">Hero</p>
         <h1 className="mt-5 text-[clamp(2rem,5vw,3.25rem)] font-medium leading-[1.04] tracking-[-0.03em]">
-          Three ways in.
+          Three lights behind the mark.
         </h1>
         <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
-          Same page in all three: the code scrolls, a soft band of decoding
-          travels through it, drops fall, characters glint. No bar, no beam,
-          nothing to watch go past. What differs is where the light comes from —
-          and in all three the pointer only nudges it a fraction of the
-          viewport. It never carries it.
+          The same three layers throughout: the character matrix and its band of
+          real code at the back, a source in the middle, and RG in front in deep
+          black, blocking it. The pointer moves the source behind the letters.
+          What differs is how the light behaves once the mark gets in its way.
         </p>
 
         <ul className="mt-16 space-y-16">
-          {CONCEPTS.map((concept, i) => (
-            <li key={concept.id}>
-              <Link href={`/lab/${concept.id}`} className="group block">
+          {HERO_VARIANTS.map((variant, i) => (
+            <li key={variant.id}>
+              <Link href={`/lab/${variant.id}`} className="group block">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-line bg-black">
                   <Image
-                    src={`/lab/${concept.id}.jpg`}
-                    alt={`${concept.name} concept`}
+                    src={`/lab/${variant.id}.jpg`}
+                    alt={`${variant.name} treatment`}
                     fill
                     sizes="(max-width: 1024px) 100vw, 72rem"
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
@@ -41,29 +39,18 @@ export default function LabIndex() {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="max-w-xl">
+                  <div className="max-w-2xl">
                     <div className="flex items-baseline gap-4">
                       <span className="tag tabular-nums">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <h2 className="text-2xl font-medium tracking-tight sm:text-[1.75rem]">
-                        {concept.name}
+                        {variant.name}
                       </h2>
-                      <span className="tag">{concept.verb}</span>
                     </div>
                     <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
-                      {concept.summary}
+                      {variant.summary}
                     </p>
-                    <ul className="mt-4 space-y-1.5">
-                      {concept.layers.map((layer) => (
-                        <li key={layer} className="tag flex gap-2.5 normal-case tracking-normal">
-                          <span aria-hidden className="text-dim">
-                            ·
-                          </span>
-                          <span>{layer}</span>
-                        </li>
-                      ))}
-                    </ul>
                   </div>
                   <span className="tag shrink-0 transition-colors group-hover:text-muted">
                     Open live →
