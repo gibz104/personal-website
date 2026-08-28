@@ -1,0 +1,656 @@
+{
+  "generatedAt": "2026-08-28T18:14:28.905Z",
+  "profile": {
+    "login": "gibz104",
+    "name": "gibz",
+    "avatar": "https://avatars.githubusercontent.com/u/35471104?v=4",
+    "location": "Chicago",
+    "followers": 25,
+    "createdAt": "2018-01-15T22:33:50Z"
+  },
+  "projects": [
+    {
+      "name": "Rethix",
+      "slug": "rethix",
+      "title": "Rethix",
+      "tagline": "An Ethereum indexer that rides inside the node itself, using Reth Execution Extensions.",
+      "blurb": "Most indexers watch a node from the outside and pay for it in latency and RPC pressure. Rethix runs as a Reth ExEx — in-process with execution — so it sees state transitions as they commit rather than polling for them afterwards.",
+      "url": "https://github.com/gibz104/Rethix",
+      "homepage": null,
+      "language": "Rust",
+      "languages": [
+        {
+          "name": "Rust",
+          "size": 316911,
+          "pct": 1
+        }
+      ],
+      "stars": 33,
+      "forks": 2,
+      "topics": [],
+      "category": "onchain",
+      "createdAt": "2024-07-21T23:18:39Z",
+      "pushedAt": "2025-11-18T16:42:33Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 0,
+      "summary": "Rethix (Reth + Index) is a cutting-edge Ethereum blockchain indexer that leverages Reth's Execution Extensions (ExEx) framework to deliver unparalleled indexing performance. Built in Rust for maximum efficiency, Rethix transforms raw blockchain data into queryable PostgreSQL tables in real-time. Rethix offers granular control over what blockchain data you index:",
+      "highlights": [
+        "⚡ Lightning Fast: Process thousands of blocks per second with native Rust performance",
+        "🔄 Real-time & Historical: Seamlessly handles both live tip-following and historical backfilling",
+        "📊 Modular Datasets: Choose exactly what data you need - from basic headers to complex DeFi analytics",
+        "🛠️ Production Ready: Battle-tested with automatic recovery, gap detection, and resumable processing",
+        "🔌 Full Reth Integration: Access all standard Reth node capabilities plus advanced indexing",
+        "~2TB SSD for full Ethereum mainnet sync"
+      ]
+    },
+    {
+      "name": "SpoolmanSync",
+      "slug": "spoolmansync",
+      "title": "SpoolmanSync",
+      "tagline": "Filament that tracks itself — Bambu Lab printers to Spoolman, through Home Assistant.",
+      "blurb": "Bambu printers know which spool is loaded and how much they burned; Spoolman knows what you own. Nothing connected the two. SpoolmanSync closes that loop automatically — QR assignment, live usage, and no YAML to hand-write.",
+      "url": "https://github.com/gibz104/SpoolmanSync",
+      "homepage": null,
+      "language": "TypeScript",
+      "languages": [
+        {
+          "name": "TypeScript",
+          "size": 820404,
+          "pct": 0.9773963308501424
+        },
+        {
+          "name": "Shell",
+          "size": 8244,
+          "pct": 0.009821570045402721
+        },
+        {
+          "name": "CSS",
+          "size": 5140,
+          "pct": 0.006123589281097766
+        },
+        {
+          "name": "Dockerfile",
+          "size": 5030,
+          "pct": 0.005992539705043145
+        },
+        {
+          "name": "JavaScript",
+          "size": 559,
+          "pct": 0.00066597011831394
+        }
+      ],
+      "stars": 68,
+      "forks": 10,
+      "topics": [
+        "3d-printing",
+        "ams",
+        "bambu-lab",
+        "bambulab",
+        "docker",
+        "filament-management",
+        "filament-tracking",
+        "home-assistant",
+        "home-assistant-integration",
+        "nextjs",
+        "spoolman"
+      ],
+      "category": "hardware",
+      "createdAt": "2026-01-19T23:40:04Z",
+      "pushedAt": "2026-08-18T02:22:07Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 1,
+      "summary": "Automatic filament tracking for Bambu Lab and Creality printers with Spoolman SpoolmanSync is a web app that automatically tracks which filament spools are loaded in your 3D printer's AMS/CFS and keeps Spoolman inventory in sync — including weight deducted per print. Works with Bambu Lab (X1C, P1S, A1, H2D, AMS, AMS 2 Pro, AMS HT) and Creality (K1, K2, K2 Plus, Hi, Ender 3 V3 with CFS) printers, and supports filament from any vendor.",
+      "highlights": [
+        "Web dashboard — view printers, AMS/CFS units, and tray assignments at a glance",
+        "Click-to-assign — pick spools from your Spoolman inventory with search and filters",
+        "Multi-brand support — Bambu Lab and Creality printers side-by-side on one dashboard",
+        "Automatic usage tracking — filament weight deducted from the correct spool when prints complete",
+        "QR & NFC — scan Spoolman QR codes, print your own QR labels, or write NFC stickers for instant assignment",
+        "Low stock alerts — Home Assistant notifications when you're down to your last spool of a type"
+      ]
+    },
+    {
+      "name": "reth-db-py",
+      "slug": "reth-db-py",
+      "title": "reth-db-py",
+      "tagline": "Read Reth's database straight from Python. Written in Rust.",
+      "blurb": "A PyO3 bridge over Reth's MDBX store. The point is to skip JSON-RPC entirely: analysts get a Python API, and the Rust layer keeps the reads cheap enough to run over whole ranges of history.",
+      "url": "https://github.com/gibz104/reth-db-py",
+      "homepage": null,
+      "language": "Rust",
+      "languages": [
+        {
+          "name": "Rust",
+          "size": 6824,
+          "pct": 0.6866572751056551
+        },
+        {
+          "name": "Python",
+          "size": 3114,
+          "pct": 0.31334272489434495
+        }
+      ],
+      "stars": 65,
+      "forks": 5,
+      "topics": [
+        "pyo3",
+        "python",
+        "reth",
+        "rust"
+      ],
+      "category": "onchain",
+      "createdAt": "2023-06-25T02:35:21Z",
+      "pushedAt": "2025-02-24T17:14:38Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 2,
+      "summary": "Python package allowing you to interact with the Reth DB via Python. Written with Rust and Pyo3. This python wrapper can access node data 3x-5x faster than local web3.py calls. Using this package, a block can be retrieved in ~10ms on a local reth DB.",
+      "highlights": [
+        "get_header_by_block_number: get a single header by block number",
+        "get_headers_by_block_number_range: get multiple headers by block number range",
+        "get_transaction_by_id: get a single transaction by transaction id",
+        "get_transactions_by_id_range: get multiple transactions by transaction id range",
+        "get_transactions_by_block_number_range: get multiple transactions by block number range",
+        "get_block_by_number: get a single block by block number"
+      ]
+    },
+    {
+      "name": "esea-standings",
+      "slug": "esea-standings",
+      "title": "ESEA Standings",
+      "tagline": "Live ESEA Counter-Strike standings that show their own work — every tiebreaker, in order.",
+      "blurb": "League tables tell you the ranking but never why. This one derives placement from match data and shows the tiebreaker chain that produced it, so a contested position is auditable instead of asserted.",
+      "url": "https://github.com/gibz104/esea-standings",
+      "homepage": "https://esea.libertas.systems",
+      "language": "TypeScript",
+      "languages": [
+        {
+          "name": "TypeScript",
+          "size": 210611,
+          "pct": 0.965520877266976
+        },
+        {
+          "name": "CSS",
+          "size": 3835,
+          "pct": 0.017581097683971172
+        },
+        {
+          "name": "JavaScript",
+          "size": 2663,
+          "pct": 0.01220820420662718
+        },
+        {
+          "name": "Dockerfile",
+          "size": 1023,
+          "pct": 0.004689820842425687
+        }
+      ],
+      "stars": 1,
+      "forks": 0,
+      "topics": [
+        "counter-strike",
+        "cs2",
+        "docker",
+        "esea",
+        "esports",
+        "faceit",
+        "nextjs",
+        "pwa",
+        "react",
+        "standings",
+        "tailwindcss",
+        "typescript"
+      ],
+      "category": "viz",
+      "createdAt": "2026-08-06T01:12:48Z",
+      "pushedAt": "2026-08-28T16:57:36Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 3,
+      "summary": "Live Counter-Strike 2 ESEA league tables that show why each team is ranked where it is. FACEIT's standings page shows you a win-loss record and a rank, and nothing else. In a Swiss format dozens of teams end up on the same record, so the order looks arbitrary and there's no way to tell what actually separated two teams. This app puts the deciding tiebreakers right in the table.",
+      "highlights": []
+    },
+    {
+      "name": "SafeGithubOTA",
+      "slug": "safegithubota",
+      "title": "SafeGithubOTA",
+      "tagline": "Over-the-air firmware updates for ESP32, pulled from private GitHub releases, with rollback that actually works.",
+      "blurb": "Shipping firmware to devices you can't physically reach means a bad flash is a brick. This library does semver-aware updates from private release assets, provisions over a captive portal, and rolls back on its own if the new image fails to come up — with no external dependencies.",
+      "url": "https://github.com/gibz104/SafeGithubOTA",
+      "homepage": null,
+      "language": "C++",
+      "languages": [
+        {
+          "name": "C++",
+          "size": 59839,
+          "pct": 0.9508517129600204
+        },
+        {
+          "name": "C",
+          "size": 3093,
+          "pct": 0.04914828703997966
+        }
+      ],
+      "stars": 8,
+      "forks": 1,
+      "topics": [
+        "arduino",
+        "arduino-library",
+        "captive-portal",
+        "embedded",
+        "esp-idf",
+        "esp32",
+        "esp32-arduino",
+        "esp32-c3",
+        "esp32-s3",
+        "firmware-update",
+        "github-releases",
+        "iot",
+        "ota",
+        "ota-updates",
+        "over-the-air",
+        "platformio",
+        "private-repo",
+        "rollback",
+        "semver",
+        "wifi"
+      ],
+      "category": "hardware",
+      "createdAt": "2026-02-10T15:22:13Z",
+      "pushedAt": "2026-05-17T16:42:07Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 4,
+      "summary": "Safe OTA firmware updates from GitHub releases for ESP32 — public or private repositories. SafeGithubOTA lets your ESP32 devices check for new firmware releases on GitHub, download and flash them over-the-air, and automatically roll back to the previous version if the new firmware fails a validation check. It works with both public and private repositories.",
+      "highlights": [
+        "Public & Private Repo Support — Downloads firmware binaries from GitHub releases. Private repos use a Personal Access Token (PAT); public repos need no token at all (setPatRequired(false))",
+        "Automatic Rollback Protection — If new firmware fails your validation callback, the ESP32 bootloader automatically reverts to the previous working version",
+        "Semantic Version Comparison — Compares local and remote versions using semver (MAJOR.MINOR.PATCH) to determine if an update is available",
+        "Auto-Check Timer — Configurable periodic update checks (e.g., every 6 hours) that run in the background",
+        "Callbacks — Optional callbacks for validation, progress reporting, update gating, and custom logging",
+        "Zero External Dependencies — Only uses libraries built into the ESP32 Arduino core (WiFi, WiFiClientSecure, WebServer, Update, Preferences)"
+      ]
+    },
+    {
+      "name": "ha-sproutlink",
+      "slug": "ha-sproutlink",
+      "title": "Sproutlink",
+      "tagline": "Home Assistant integration for a plant-telemetry stack — ESP32-C3 sensors over Thread and MQTT.",
+      "blurb": "The public half of a four-part system: custom ESP32-C3 firmware, a gateway, this Home Assistant integration, and a dashboard. Soil moisture, temperature, humidity and light leave the plant and arrive somewhere legible, with OTA updates handled by SafeGithubOTA.",
+      "url": "https://github.com/gibz104/ha-sproutlink",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 29312,
+          "pct": 1
+        }
+      ],
+      "stars": 1,
+      "forks": 0,
+      "topics": [
+        "esp32",
+        "hacs",
+        "home-assistant",
+        "home-assistant-custom-component",
+        "iot",
+        "mqtt",
+        "plant-monitoring",
+        "sproutlink",
+        "thread"
+      ],
+      "category": "hardware",
+      "createdAt": "2026-02-25T22:08:41Z",
+      "pushedAt": "2026-05-06T15:51:17Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 5,
+      "summary": "A custom Home Assistant integration for Sproutlink plant monitoring sensors and gateways. Connects directly to your Sproutlink gateway's built-in MQTT broker over your local network — no external broker or cloud dependency required. Sproutlink is a plant monitoring system consisting of wireless soil sensors and a WiFi gateway. Each sensor measures soil moisture, temperature, humidity, and ambient light every 15 minutes and transmits readings to the gateway over a Thread mesh",
+      "highlights": [
+        "Auto-discovery — Gateways are discovered automatically via mDNS (zero configuration)",
+        "Local push — Data arrives over MQTT on your local network; no cloud, no polling",
+        "Dynamic sensor discovery — New sensors appear in HA automatically when they first report to the gateway",
+        "Gateway diagnostics — WiFi signal, free memory, uptime, connected sensor count, Thread network status",
+        "Sproutlink Gateway (ESP32-C6) running firmware v1.0.0 or later",
+        "Home Assistant 2024.12.0 or later"
+      ]
+    },
+    {
+      "name": "xlsb-converter",
+      "slug": "xlsb-converter",
+      "title": "XLSB Converter",
+      "tagline": "Bulk-converts every Excel file in a directory to xlsb. Quietly the most-used thing I've written.",
+      "blurb": null,
+      "url": "https://github.com/gibz104/xlsb-converter",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 2236,
+          "pct": 1
+        }
+      ],
+      "stars": 10,
+      "forks": 3,
+      "topics": [
+        "converter",
+        "excel",
+        "python",
+        "vba",
+        "win32com",
+        "xlsb"
+      ],
+      "category": "tools",
+      "createdAt": "2021-03-09T22:43:31Z",
+      "pushedAt": "2023-03-13T20:54:56Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 6,
+      "summary": "Simple python script that converts all Excel files (xls, xlsx, xlsm, csv) in a directory into xlsb files. Do you have massive excel files for financial modeling? Have you heard that storing your Excel files as binary format (.xlsb) can speed up your workbook's performance? Xlsb files also support macros, similar to xlsm. Well if you have hundreds of Excel files that need to be converted, then this script is for you.",
+      "highlights": []
+    },
+    {
+      "name": "eth-historical-transactions",
+      "slug": "eth-historical-transactions",
+      "title": "Historical Transactions",
+      "tagline": "Pulls every transaction from mined Ethereum blocks into SQLite, via a Geth node.",
+      "blurb": "The earliest version of the indexing idea, and the one that made the case for everything after it: walk the chain, flatten it, and put it somewhere you can query without asking a node for permission.",
+      "url": "https://github.com/gibz104/eth-historical-transactions",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 2577,
+          "pct": 1
+        }
+      ],
+      "stars": 3,
+      "forks": 2,
+      "topics": [
+        "ethereum",
+        "python",
+        "transactions",
+        "web3"
+      ],
+      "category": "onchain",
+      "createdAt": "2021-07-30T01:19:50Z",
+      "pushedAt": "2023-03-13T20:47:13Z",
+      "isFork": false,
+      "archived": false,
+      "featured": true,
+      "order": 7,
+      "summary": "Web3.py script that downloads all transactions from mined ethereum blocks and saves them to a SQLite database file. Must provide a starting block (-s), ending block (-e), and block increment amount (-i).",
+      "highlights": []
+    },
+    {
+      "name": "NFT-Auto-Minter",
+      "slug": "nft-auto-minter",
+      "title": "NFT Auto-Minter",
+      "tagline": "Script that automatically mints NFTs from an Ethereum smart contract",
+      "blurb": null,
+      "url": "https://github.com/gibz104/NFT-Auto-Minter",
+      "homepage": null,
+      "language": "JavaScript",
+      "languages": [
+        {
+          "name": "JavaScript",
+          "size": 2503,
+          "pct": 1
+        }
+      ],
+      "stars": 8,
+      "forks": 3,
+      "topics": [],
+      "category": "onchain",
+      "createdAt": "2022-01-06T04:49:02Z",
+      "pushedAt": "2022-01-06T05:17:55Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "This code was built to mint NFTs for an Ethereum project called \"Kaiju Kingz\", but can be adapted for other NFT smart contract mints. Kaiju Kingz NFT required the smart contract owner to send a transaction to the smart contract to enable the NFT minting process. Once minting was enabled, anyone could send a transaction to their smart contract to mint an NFT (up to the max supply).",
+      "highlights": []
+    },
+    {
+      "name": "web3de_py",
+      "slug": "web3de_py",
+      "title": "web3de",
+      "tagline": "Ethereum smart contract handlers and utilities using Geth and GraphQL",
+      "blurb": null,
+      "url": "https://github.com/gibz104/web3de_py",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 35440,
+          "pct": 1
+        }
+      ],
+      "stars": 2,
+      "forks": 0,
+      "topics": [
+        "eth",
+        "geth",
+        "graphql",
+        "handlers"
+      ],
+      "category": "onchain",
+      "createdAt": "2022-02-02T02:38:34Z",
+      "pushedAt": "2023-03-13T21:02:59Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "This repo contains handlers for common Ethereum smart contracts and services as well as utilities for sending Ethereum transactions and interacting with a local geth node using JSON RPC endpoints. Explores geth's GraphQL API and querying smart contract storage slots (Uniswap).",
+      "highlights": []
+    },
+    {
+      "name": "covid-vaccination-scraper",
+      "slug": "covid-vaccination-scraper",
+      "title": "Vaccination Scraper",
+      "tagline": "Targeted scraper that retrieves state vaccination eligibility phases from USNews (http://www.usnews.com/news/best-states/articles/covid-19-vaccine-eligibility-by-state).",
+      "blurb": null,
+      "url": "https://github.com/gibz104/covid-vaccination-scraper",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 5600,
+          "pct": 1
+        }
+      ],
+      "stars": 2,
+      "forks": 0,
+      "topics": [
+        "covid",
+        "python",
+        "scraper",
+        "usnews",
+        "vaccination"
+      ],
+      "category": "tools",
+      "createdAt": "2021-08-11T04:13:04Z",
+      "pushedAt": "2021-08-11T04:26:59Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "Covid data scraper that retrieves current and next phase of vaccination eligiblity by state. Run the python file and vaccination data will be saved to csv file in working directoy. Example csv output is included in this repo. This scraper uses regular expressions that explicitly targets: http://www.usnews.com/news/best-states/articles/covid-19-vaccine-eligibility-by-state",
+      "highlights": []
+    },
+    {
+      "name": "Tableau-DeFi-Infographic",
+      "slug": "tableau-defi-infographic",
+      "title": "DeFi Infographic",
+      "tagline": "Tableau Infographic showing rise in DeFi on Ethereum network from Sep 2020 to Aug 2021",
+      "blurb": null,
+      "url": "https://github.com/gibz104/Tableau-DeFi-Infographic",
+      "homepage": null,
+      "language": null,
+      "languages": [],
+      "stars": 1,
+      "forks": 0,
+      "topics": [
+        "defi",
+        "ethereum",
+        "tableau"
+      ],
+      "category": "viz",
+      "createdAt": "2021-08-23T22:11:05Z",
+      "pushedAt": "2025-10-04T00:39:57Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "Tableau Infographic showing the rise in DeFi on Ethereum network from Sep 2020 to Aug 2021. This was an assignment I submitted for a Data Visualization course in my master's program. Transactions were analyzed using the eth historical transaction script here.",
+      "highlights": []
+    },
+    {
+      "name": "tableau-datasource-refresher",
+      "slug": "tableau-datasource-refresher",
+      "title": "Tableau Refresher",
+      "tagline": "Selenium browser to automate Tableau Public data sources.",
+      "blurb": null,
+      "url": "https://github.com/gibz104/tableau-datasource-refresher",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 11534,
+          "pct": 1
+        }
+      ],
+      "stars": 1,
+      "forks": 0,
+      "topics": [],
+      "category": "viz",
+      "createdAt": "2023-03-09T20:08:17Z",
+      "pushedAt": "2023-03-12T23:04:23Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "This python code uses a headless Selenium browser to request a data refresh on a Tableau Public dashboard. Tableau Public allows you to create and publish dashboards for free that can be accessed by anyone online. There is no authetication (or cost) for the number of users that view your dashboard, nor the resources to host and maintain the dashboard. The catch is that Tableau Public only allows you to connect to a very limited subset of data sources and they cannot be setup",
+      "highlights": [
+        "username parameter should be the username of the dashboard owner",
+        "password parameter should be the password of the dashboard owner"
+      ]
+    },
+    {
+      "name": "google-sheets-writer",
+      "slug": "google-sheets-writer",
+      "title": "Sheets Writer",
+      "tagline": "Python class to write any size data to Google Sheets.  If necessary, multiple worksheets and workbooks are used.",
+      "blurb": null,
+      "url": "https://github.com/gibz104/google-sheets-writer",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 23275,
+          "pct": 1
+        }
+      ],
+      "stars": 1,
+      "forks": 0,
+      "topics": [],
+      "category": "tools",
+      "createdAt": "2023-02-28T21:58:37Z",
+      "pushedAt": "2023-03-12T02:23:34Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "This python class allows you to write any size data to Google Sheets by chunking data into multiple workbooks and worksheets. This google sheets writer uses the gspread package (https://github.com/burnash/gspread), which itself uses the official Google Sheets API. There are two methods to authenticate with Google Sheets and need to be setup prior to using this google sheets writer. For either method chosen, you will need to create a local json file with your authentication de",
+      "highlights": [
+        "chunk_size: # of records to write at a time to Google Sheets (Default = 100,000)",
+        "max_cells_per_sheet: max # of cells per worksheet (Default = 3,000,000)",
+        "max_cells_per_workbook: max # of cells per workbook (Default = 9,000,000)"
+      ]
+    },
+    {
+      "name": "twitch-irc-chat-stream",
+      "slug": "twitch-irc-chat-stream",
+      "title": "Twitch Chat Stream",
+      "tagline": "Get real-time stream of chat messages (IRC) from a live Twitch streamer's chat.",
+      "blurb": null,
+      "url": "https://github.com/gibz104/twitch-irc-chat-stream",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 2384,
+          "pct": 1
+        }
+      ],
+      "stars": 1,
+      "forks": 0,
+      "topics": [
+        "irc",
+        "python",
+        "twitch"
+      ],
+      "category": "tools",
+      "createdAt": "2021-08-23T20:52:22Z",
+      "pushedAt": "2023-01-16T18:16:17Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "Get real-time stream of chat messages (IRC) from a live Twitch streamer's chat. Provide username of live streamer as argument when starting program and stream will automatically begin. The ouput will be a dictionary that has the chat message, username, whether the user is a mod, whether the user is a subscriber to the channel, and any commands in the message that start with \"!\". API keys provided in this program may become out-of-date and stop working. If this happens you can",
+      "highlights": []
+    },
+    {
+      "name": "alphamev-submission",
+      "slug": "alphamev-submission",
+      "title": "AlphaMEV",
+      "tagline": "Competition entry for the first alphamev MEV prediction contest — AUC 0.981.",
+      "blurb": null,
+      "url": "https://github.com/gibz104/alphamev-submission",
+      "homepage": null,
+      "language": "Python",
+      "languages": [
+        {
+          "name": "Python",
+          "size": 13289,
+          "pct": 1
+        }
+      ],
+      "stars": 1,
+      "forks": 0,
+      "topics": [
+        "alphamev",
+        "ethereum",
+        "machine-learning",
+        "mev",
+        "python"
+      ],
+      "category": "onchain",
+      "createdAt": "2021-10-08T19:21:43Z",
+      "pushedAt": "2021-10-08T19:46:10Z",
+      "isFork": false,
+      "archived": false,
+      "featured": false,
+      "order": 999,
+      "summary": "Submission code for the first https://alphamev.ai MEV competition with AUC (0.9812) and MSE (0.122). Competition was to build a model to predict whether Ethereum transactions were backrunnable and how much MEV profit could be extracted from the transaction.",
+      "highlights": []
+    }
+  ]
+}

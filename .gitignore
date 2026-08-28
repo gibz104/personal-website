@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+preview/
+
+# Headless render output and browser-automation scratch
+/preview
+/.playwright-mcp
+*.local.png
