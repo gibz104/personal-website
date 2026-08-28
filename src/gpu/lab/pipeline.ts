@@ -21,10 +21,16 @@ export type RevealTuning = {
   strength: number;
   /** Click stamp radius, as a fraction of the short edge. */
   clickRadius: number;
+  /** Neighbour bleed per frame. Above zero the field spreads on its own. */
+  spread: number;
 };
+
+/** Pixels per second the code drifts upward. */
+export const SCROLL_SPEED = 17;
 
 export type ConceptFrame = {
   time: number;
+  dt: number;
   /** Pointer in backing pixels, canvas-relative. */
   pointer: readonly [number, number];
   /** Where it was last frame, so the brush can stamp the whole segment. */
@@ -34,12 +40,8 @@ export type ConceptFrame = {
   pointerActive: number;
   /** Seconds since the last click; large when there has not been one. */
   clickAge: number;
-  /** 0..1, ramps while the pointer holds still. */
-  dwell: number;
   /** Smoothed pointer speed in pixels per second. */
   speed: number;
-  /** Row index pinned by the last click, or -1. */
-  pinnedRow: number;
   intro: number;
 };
 
@@ -70,7 +72,7 @@ function createAtlasTexture(gpu: Gpu): GPUTexture {
   return texture;
 }
 
-function createGridTexture(gpu: Gpu): GPUTexture {
+function createGridTexture(gpu: Gpu, seed?: number): GPUTexture {
   const texture = gpu.gpu.createTexture({
     label: "code-grid",
     size: [GRID_COLS, GRID_ROWS],
@@ -80,7 +82,7 @@ function createGridTexture(gpu: Gpu): GPUTexture {
   // 256 cells x 2 bytes = 512, already 256-aligned.
   gpu.gpu.queue.writeTexture(
     { texture },
-    buildCodeGrid(),
+    buildCodeGrid(seed),
     { bytesPerRow: GRID_COLS * 2, rowsPerImage: GRID_ROWS },
     [GRID_COLS, GRID_ROWS],
   );
@@ -94,6 +96,8 @@ export function createLabPipeline(options: {
   shaders: LabShaders;
   tuning: RevealTuning;
   output: Surface | Target;
+  /** Layout seed. Varying it per visit gives repeat visitors a new page. */
+  gridSeed?: number;
 }): LabPipeline {
   const { gpu, api, output, tuning } = options;
   let [width, height] = output.size;
@@ -122,7 +126,7 @@ export function createLabPipeline(options: {
   });
 
   const atlas = createAtlasTexture(gpu);
-  const grid = createGridTexture(gpu);
+  const grid = createGridTexture(gpu, options.gridSeed);
 
   const conceptEffect = api.effect(gpu, options.scene, { label: "lab-concept" });
   // Two reveal effects, alternated: one pass reads A and writes B, the next
@@ -172,6 +176,10 @@ export function createLabPipeline(options: {
 
   function render(frame: ConceptFrame) {
     const short = Math.min(width, height);
+    // The page drifts upward. Sampling the grid at a growing y offset reads
+    // content further down, so the text appears to rise.
+    const scrollY = frame.time * SCROLL_SPEED;
+    const scrollDelta = frame.dt * SCROLL_SPEED;
 
     // The reveal pass runs at half resolution, so pointer coordinates have to
     // be halved to land in the same place.
@@ -188,12 +196,14 @@ export function createLabPipeline(options: {
         pointer: [frame.pointer[0] * scale, frame.pointer[1] * scale],
         previous: [frame.previousPointer[0] * scale, frame.previousPointer[1] * scale],
         click: [frame.click[0] * scale, frame.click[1] * scale],
+        scrollDelta: [0, scrollDelta * scale],
         radius: tuning.radius * short * scale,
         strength: tuning.strength,
         decay: tuning.decay,
         clickAge: frame.clickAge,
         clickRadius: tuning.clickRadius * short * scale,
         pointerActive: frame.pointerActive,
+        spread: tuning.spread,
       },
     });
 
@@ -202,14 +212,14 @@ export function createLabPipeline(options: {
       params: {
         resolution: [width, height],
         pointer: frame.pointer,
+        previousPointer: frame.previousPointer,
         click: frame.click,
+        scroll: [0, scrollY],
         time: frame.time,
         pointerActive: frame.pointerActive,
         clickAge: frame.clickAge,
         intro: frame.intro,
-        dwell: frame.dwell,
         speed: frame.speed,
-        pinnedRow: frame.pinnedRow,
       },
     });
 

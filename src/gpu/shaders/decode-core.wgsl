@@ -72,6 +72,40 @@ export fn renderCell(
   return color;
 }
 
+/// The scan bar: a hard edge of light that sweeps the page, decoding and
+/// illuminating as it passes and leaving an afterglow behind it.
+///
+/// This is back by request. It stopped being redundant the moment the pointer
+/// gave up revealing — decoding is now the page's own behaviour, and the
+/// pointer does something else entirely.
+export fn scanBar(y: f32, height: f32, time: f32, period: f32) -> f32 {
+  let phase = fract(time / period);
+  let barY = phase * (height * 1.30) - height * 0.15;
+  let d = barY - y;
+  // Bright leading edge, long trailing glow above it.
+  let edge = exp(-abs(d) / (height * 0.009));
+  let wake = exp(-max(d, 0.0) / (height * 0.22)) * step(0.0, d);
+  return max(edge, wake * 0.62);
+}
+
+/// Falling one-character-wide columns of decode. Returns (decode, headGlow).
+///
+/// One character wide on purpose: a drop hands you a word and never a sentence,
+/// so it carries the rhythm without answering anything.
+export fn dropColumn(frag: vec2f, res: vec2f, time: f32, cellW: f32) -> vec2f {
+  let colId = floor(frag.x / cellW);
+  let seed = hash2(vec2f(colId, 3.71));
+  let carries = step(0.82, seed.x);
+  let speed = 0.22 + seed.y * 0.40;
+  let span = res.y * 1.6;
+  let head = fract(time * speed + seed.x * 17.0) * span - res.y * 0.30;
+  let behind = head - frag.y;
+  let short = min(res.x, res.y);
+  let tail = exp(-max(behind, 0.0) / (short * 0.20)) * step(0.0, behind);
+  let glow = exp(-abs(behind) / (cellW * 2.6));
+  return vec2f(carries * tail, carries * glow);
+}
+
 /// Distance from `p` to the segment `a`-`b`.
 ///
 /// Stamping along the segment the pointer travelled, rather than at its current

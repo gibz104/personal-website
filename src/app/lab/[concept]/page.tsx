@@ -45,7 +45,7 @@ export default async function ConceptPage({ params }: PageProps<"/lab/[concept]"
 
         <div className="over-field max-w-md">
           <p className="tag">
-            Concept {String(index + 1).padStart(2, "0")}
+            Concept {String(index + 1).padStart(2, "0")} · {found.verb}
           </p>
           <h1 className="mt-3 text-4xl font-medium tracking-tight sm:text-5xl">
             {found.name}

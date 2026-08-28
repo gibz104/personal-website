@@ -10,12 +10,18 @@ struct Reveal {
   pointer: vec2f,
   previous: vec2f,
   click: vec2f,
+  /// Pixels the code moved this frame. The buffer has to travel with the
+  /// content, or a scrolling page drags its own history across itself.
+  scrollDelta: vec2f,
   radius: f32,
   strength: f32,
   decay: f32,
   clickAge: f32,
   clickRadius: f32,
   pointerActive: f32,
+  /// Neighbour bleed per frame. Zero for a plain trail; above zero the field
+  /// spreads outward on its own, which is what lets charge propagate.
+  spread: f32,
 }
 
 @group(0) @binding(0) var src: texture_2d<f32>;
@@ -25,7 +31,23 @@ struct Reveal {
 @fragment
 fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let frag = uv * reveal.resolution;
-  let previous = textureSampleLevel(src, samp, uv, 0.0).r * reveal.decay;
+  let texel = 1.0 / reveal.resolution;
+  let shifted = uv + reveal.scrollDelta * texel;
+
+  var previous = textureSampleLevel(src, samp, shifted, 0.0).r;
+
+  // Four-tap bleed: each cell hands a little of its charge to its neighbours,
+  // so a spark walks outward instead of merely fading in place.
+  if (reveal.spread > 0.0) {
+    let step = texel * 1.5;
+    var neighbours = textureSampleLevel(src, samp, shifted + vec2f(step.x, 0.0), 0.0).r;
+    neighbours = neighbours + textureSampleLevel(src, samp, shifted - vec2f(step.x, 0.0), 0.0).r;
+    neighbours = neighbours + textureSampleLevel(src, samp, shifted + vec2f(0.0, step.y), 0.0).r;
+    neighbours = neighbours + textureSampleLevel(src, samp, shifted - vec2f(0.0, step.y), 0.0).r;
+    previous = mix(previous, neighbours * 0.25, reveal.spread);
+  }
+
+  previous = previous * reveal.decay;
 
   // Stamp along the path travelled this frame, not just the endpoint.
   let d = distToSegment(frag, reveal.previous, reveal.pointer);

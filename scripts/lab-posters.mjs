@@ -5,18 +5,18 @@ import { existsSync, unlinkSync, mkdirSync } from "node:fs";
 mkdirSync("public/lab", { recursive: true });
 
 const shots = [
-  { id: "trail", px: "0.60", py: "0.44", time: "9", steps: "120", dwell: "0.3", pinned: "-1" },
-  { id: "focus", px: "0.55", py: "0.52", time: "8", steps: "60", dwell: "0.85", pinned: "12" },
-  { id: "cascade", px: "0.52", py: "0.45", time: "11", steps: "90", dwell: "0.3", pinned: "-1" },
+  { id: "lantern", px: "0.60", py: "0.42", time: "9", steps: "70", speed: "500" },
+  { id: "wake", px: "0.52", py: "0.48", time: "9", steps: "70", speed: "1100" },
+  { id: "charge", px: "0.58", py: "0.45", time: "10", steps: "140", speed: "700" },
 ];
 
-for (const { id, px, py, time, steps, dwell, pinned } of shots) {
+for (const { id, px, py, time, steps, speed } of shots) {
   const png = `public/lab/${id}.png`;
   const jpg = `public/lab/${id}.jpg`;
   execFileSync("npx", [
     "tsx", "scripts/preview-lab.mts",
     "--concept", id, "--px", px, "--py", py, "--time", time,
-    "--steps", steps, "--dwell", dwell, "--pinned", pinned,
+    "--steps", steps, "--speed", speed,
     "--width", "1600", "--height", "1000", "--out", png,
   ], { stdio: "inherit" });
   try {

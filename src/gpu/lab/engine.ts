@@ -32,14 +32,12 @@ export function createLabEngine(
   let click: [number, number] = [-9999, -9999];
   let previousPointer: [number, number] = [0, 0];
   let speed = 0;
-  let dwell = 0;
-  let pinnedRow = -1;
   let intro = 0;
   let elapsed = 0;
   let last = 0;
 
-  // Matches CELL in the shaders: rows are 20 backing pixels tall.
-  const CELL_HEIGHT = 20;
+  // A fresh layout each visit, so the page is never the same twice.
+  const gridSeed = Math.floor(Math.random() * 100_000) + 1;
 
   function measure() {
     const rect = canvas.getBoundingClientRect();
@@ -74,8 +72,6 @@ export function createLabEngine(
     onPointerMove(event);
     clickAge = 0;
     click = [...pointer];
-    // Focus pins the row that was clicked; the others ignore it.
-    pinnedRow = Math.floor(pointer[1] / CELL_HEIGHT);
   };
 
   function tick(now: number) {
@@ -90,24 +86,22 @@ export function createLabEngine(
     intro = Math.min(1, intro + dt * 0.7);
     pointerActive += (pointerGoal - pointerActive) * (1 - Math.exp(-dt * 6));
 
-    // Speed drives the brush width; dwell rewards holding still.
+    // Speed drives how hard the pointer works the field.
     const moved = Math.hypot(pointer[0] - previousPointer[0], pointer[1] - previousPointer[1]);
     speed += (moved / Math.max(dt, 1e-4) - speed) * (1 - Math.exp(-dt * 8));
-    dwell = Math.max(0, Math.min(1, dwell + (moved < 1.5 ? dt * 0.75 : -dt * 3.2)));
 
     // Reduced motion: compose a frame, then hold it.
     if (reduced && elapsed > 5) return;
 
     pipeline.render({
       time: elapsed,
+      dt,
       pointer,
       previousPointer,
       click,
       pointerActive,
       clickAge,
-      dwell,
       speed,
-      pinnedRow,
       intro,
     });
 
@@ -138,6 +132,7 @@ export function createLabEngine(
       scene: CONCEPT_SHADERS[concept],
       shaders: LAB_SHARED,
       tuning: conceptById(concept)!.tuning,
+      gridSeed,
       output,
     });
     applySize();

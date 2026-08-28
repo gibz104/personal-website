@@ -17,7 +17,7 @@ function arg(name: string, fallback: string): string {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback;
 }
 
-const concept = arg("concept", "trail");
+const concept = arg("concept", "lantern");
 const width = Number(arg("width", "1440"));
 const height = Number(arg("height", "900"));
 const time = Number(arg("time", "8"));
@@ -47,6 +47,7 @@ const pipeline = createLabPipeline({
   scene,
   shaders: { reveal, bright, blur, composite },
   tuning: conceptById(concept)!.tuning,
+  gridSeed: Number(arg("seed", "7")),
   output,
 });
 
@@ -68,14 +69,13 @@ for (let i = 0; i < steps; i++) {
   const current = path(t);
   pipeline.render({
     time: time - (steps - i) * dt,
+    dt,
     pointer: current,
     previousPointer: previous,
     click: [px * width, py * height],
     pointerActive: 1,
     clickAge,
-    dwell: Number(arg("dwell", "0.35")),
-    speed: 120 * (1 - t),
-    pinnedRow: Number(arg("pinned", "-1")),
+    speed: Number(arg("speed", "700")) * (0.4 + 0.6 * (1 - t)),
     intro: 1,
   });
   previous = current;

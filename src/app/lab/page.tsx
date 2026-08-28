@@ -18,9 +18,10 @@ export default function LabIndex() {
           Three ways in.
         </h1>
         <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
-          Same field, three interaction models. The automatic sweep is gone —
-          nothing reveals a line for free any more. What is left are layers that
-          each do a different job, so none of them makes another pointless.
+          Same page in all three: the code scrolls, a scan bar sweeps and lights
+          it, drops fall through it, characters glint. The page reads itself.
+          What differs is the one thing the pointer is for — and none of the
+          three uses it to reveal.
         </p>
 
         <ul className="mt-16 space-y-16">
@@ -47,6 +48,7 @@ export default function LabIndex() {
                       <h2 className="text-2xl font-medium tracking-tight sm:text-[1.75rem]">
                         {concept.name}
                       </h2>
+                      <span className="tag">{concept.verb}</span>
                     </div>
                     <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
                       {concept.summary}
