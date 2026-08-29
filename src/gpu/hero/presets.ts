@@ -8,46 +8,57 @@ export type HeroVariant = {
   preset: FlarePreset;
 };
 
-/**
- * All three are the same idea, restrained: a lit contour around the mark and
- * very little else behind it. The differences are in degree — how uniform the
- * outline is, and how much glow is allowed to escape from behind the letters.
- */
+/** The reference's own colour: a pale blue-lavender, not white. */
+const FLARE_COLOR = [179 / 255, 191 / 255, 1] as const;
+
+/** Everything the nextjs-flare example ships with, as the starting point. */
+const REFERENCE: FlarePreset = {
+  spotReach: 0.5,
+  spotStroke: 0.9,
+  extension: 0.6,
+  beamIntensity: 0.8,
+  spotFocus: 0.08,
+  scatter: 1,
+  rimFill: 1,
+  rimIntensity: 1,
+  logoOpacity: 1,
+  smoothness: 1,
+  filmGrain: 0.03,
+  verticalEdgeFade: 0.1,
+  markDarkness: 0.96,
+  flareColor: FLARE_COLOR,
+};
+
 export const HERO_VARIANTS: HeroVariant[] = [
   {
-    id: "trace",
-    name: "Trace",
-    summary: "A clean lit outline, and almost nothing else.",
+    id: "flare",
+    name: "Flare",
+    summary: "The reference settings, unchanged.",
     detail:
-      "The contour is lit evenly the whole way round, so the monogram reads as a drawn line rather than as a lit object. Behind it, only enough glow to separate the letters from the matrix. The most restrained of the three.",
-    preset: {
-      core: 0.10, reach: 0.16, shafts: 0.16, halo: 0.22,
-      intensity: 0.85, outlineWidth: 2.0, outlineWeight: 2.6, outlineRake: 0.18,
-      outlineGlow: 0.85, bloom: 0.20, flareWeight: 0.72,
-    },
+      "Every parameter as the nextjs-flare example ships it — the same rim falloff, the same 48-step walk, the same pale blue-lavender. The only differences are the mark and the character matrix behind it.",
+    preset: { ...REFERENCE },
   },
   {
-    id: "rake",
-    name: "Rake",
-    summary: "The outline brightens on whichever side faces the light.",
+    id: "reach",
+    name: "Reach",
+    summary: "Longer beams, thrown further across the frame.",
     detail:
-      "Same stroke, but its brightness travels around the contour as the source moves, so the pointer visibly lights one side of the letters and lets the other fall back. The outline never breaks — the far side dims but still closes the shape.",
-    preset: {
-      core: 0.095, reach: 0.18, shafts: 0.20, halo: 0.26,
-      intensity: 0.95, outlineWidth: 2.2, outlineWeight: 3.0, outlineRake: 0.85,
-      outlineGlow: 0.95, bloom: 0.20, flareWeight: 0.78,
-    },
+      "Extension raised, so the walk steps further and decays more slowly. The light off the letters carries most of the way to the edges instead of staying close to the mark.",
+    preset: { ...REFERENCE, extension: 0.88, beamIntensity: 0.95, spotFocus: 0.11 },
   },
   {
-    id: "ember",
-    name: "Ember",
-    summary: "The outline, with a warmer bloom allowed out from behind.",
+    id: "close",
+    name: "Close",
+    summary: "Tighter to the letters, more edge than beam.",
     detail:
-      "A slightly softer stroke sitting in a little more light. The glow behind the letters is still low, but present enough that the mark feels lit from within rather than drawn on top.",
+      "Extension pulled back and the rim pushed up, so the glow hugs the mark and the scattering stays short. The letters read as lit objects rather than as sources throwing light across the page.",
     preset: {
-      core: 0.135, reach: 0.24, shafts: 0.22, halo: 0.46,
-      intensity: 1.05, outlineWidth: 2.5, outlineWeight: 2.1, outlineRake: 0.42,
-      outlineGlow: 1.5, bloom: 0.24, flareWeight: 0.92,
+      ...REFERENCE,
+      extension: 0.38,
+      beamIntensity: 0.55,
+      rimIntensity: 1.25,
+      spotStroke: 1.4,
+      spotFocus: 0.06,
     },
   },
 ];

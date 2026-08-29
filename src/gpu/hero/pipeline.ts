@@ -7,37 +7,39 @@ import type { FieldApi } from "../pipeline";
 
 export type HeroShaders = {
   readonly background: ShaderSource | string;
-  readonly flare: ShaderSource | string;
+  readonly rim: ShaderSource | string;
   readonly blur: ShaderSource | string;
-  readonly bright: ShaderSource | string;
   readonly composite: ShaderSource | string;
 };
 
-/** How the light behaves around the mark. */
+/**
+ * The flare's parameters, named as in vgpu's nextjs-flare example so the two
+ * can be compared directly.
+ */
 export type FlarePreset = {
-  /** Radius of the emissive core, as a fraction of the short edge. */
-  core: number;
-  /** Falloff distance, as a fraction of the short edge. Higher reaches further. */
-  reach: number;
-  /** Weight of the marched shafts. */
-  shafts: number;
-  /** Weight of the soft unoccluded pool. */
-  halo: number;
-  intensity: number;
-  /** Stroke width of the contour, in pixels. */
-  outlineWidth: number;
-  /** How much of the contour is blurred into a halo. */
-  outlineGlow: number;
-  /** Brightness of the contour. This is the subject of the frame. */
-  outlineWeight: number;
-  /** How much light direction varies brightness around the contour, 0..1. */
-  outlineRake: number;
-  /** Weight of the bloom on the character plate. */
-  bloom: number;
-  flareWeight: number;
+  /** Rim falloff with distance from the light. Higher reaches further. */
+  spotReach: number;
+  /** Dilation radius in pixels: how far outside the mark the glow starts. */
+  spotStroke: number;
+  /** Ray-march reach. Drives both step density and decay. */
+  extension: number;
+  beamIntensity: number;
+  /** Radius of the gaussian halo around the source. */
+  spotFocus: number;
+  scatter: number;
+  rimFill: number;
+  rimIntensity: number;
+  /** How much of the mark's own body is drawn. 0 keeps the letters black. */
+  logoOpacity: number;
+  /** Blend between the sharp and blurred rim along the ray. */
+  smoothness: number;
+  filmGrain: number;
+  verticalEdgeFade: number;
+  /** How completely the mark blacks out the matrix behind it. */
+  markDarkness: number;
+  flareColor: readonly [number, number, number];
 };
 
-/** Anything that can hand back a 2D context. The DOM and @napi-rs/canvas both do. */
 export type CanvasFactory = (
   width: number,
   height: number,
@@ -55,12 +57,25 @@ export type HeroFrame = {
 export type HeroPipeline = {
   render(frame: HeroFrame): void;
   resize(width: number, height: number): void;
-  setPreset(preset: FlarePreset): void;
   dispose(): void;
 };
 
 /** Pixels per second the character plate drifts upward. */
 export const SCROLL_SPEED = 17;
+
+// Kernel from the reference: eight linear-sampled tap pairs plus a centre
+// weight, giving a 33-wide gaussian for seventeen fetches.
+const BLUR_CENTER_WEIGHT = 0.0799404796215474;
+const BLUR_TAPS: readonly (readonly [number, number, number, number])[] = [
+  [1.48500449838059, 0.15215191554518462, 0, 0],
+  [3.4650570548417856, 0.12482060361420404, 0, 0],
+  [5.445220764892785, 0.08739756064091182, 0, 0],
+  [7.42555748318834, 0.052228984400379486, 0, 0],
+  [9.406126897065857, 0.026638884372877224, 0, 0],
+  [11.386985823860664, 0.011595876612829572, 0, 0],
+  [13.368187582263898, 0.004307876491458321, 0, 0],
+  [15, 0.0008880585113811997, 0, 0],
+];
 
 const TEXTURE_BINDING = 0x04;
 const COPY_DST = 0x02;
@@ -84,15 +99,15 @@ export function createHeroPipeline(options: {
 }): HeroPipeline {
   const { gpu, api, output, canvas } = options;
   let [width, height] = output.size;
-  let preset = options.preset;
+  const preset = options.preset;
+  let frameIndex = 0;
 
-  const half = (n: number) => Math.max(1, Math.floor(n / 2));
-
+  // Every stage runs at full resolution, as in the reference. The rim's
+  // dilation is the expensive part and it is what keeps the glow's edge crisp.
   const plate = api.target(gpu, { size: [width, height], format: "rgba16float", label: "hero-plate" });
-  const nearA = api.target(gpu, { size: [half(width), half(height)], format: "rgba16float", label: "hero-bloom-a" });
-  const nearB = api.target(gpu, { size: [half(width), half(height)], format: "rgba16float", label: "hero-bloom-b" });
-  const flareA = api.target(gpu, { size: [half(width), half(height)], format: "rgba16float", label: "hero-flare-a" });
-  const flareB = api.target(gpu, { size: [half(width), half(height)], format: "rgba16float", label: "hero-flare-b" });
+  const rimTarget = api.target(gpu, { size: [width, height], format: "rgba16float", label: "hero-rim" });
+  const rimA = api.target(gpu, { size: [width, height], format: "rgba16float", label: "hero-rim-a" });
+  const rimB = api.target(gpu, { size: [width, height], format: "rgba16float", label: "hero-rim-b" });
 
   const linear = api.sampler(gpu, {
     minFilter: "linear",
@@ -101,7 +116,6 @@ export function createHeroPipeline(options: {
     addressModeV: "clamp-to-edge",
   });
 
-  // --- static resources ---------------------------------------------------
   const atlasSize = FONT_ATLAS_SIZE;
   const atlas = gpu.gpu.createTexture({
     label: "font-atlas",
@@ -132,7 +146,6 @@ export function createHeroPipeline(options: {
     [GRID_COLS, GRID_ROWS],
   );
 
-  // --- the mark, redrawn at every size ------------------------------------
   let mark: GPUTexture | undefined;
 
   function buildMark() {
@@ -140,16 +153,16 @@ export function createHeroPipeline(options: {
     const texture = gpu.gpu.createTexture({
       label: "hero-mark",
       size: [width, height],
-      format: "r8unorm",
+      format: "rg8unorm",
       usage: COPY_DST | TEXTURE_BINDING,
     });
     const surface = canvas(width, height);
     const ctx = surface.getContext("2d");
     if (!ctx) throw new Error("hero: 2D context unavailable for the mark");
-    const bytesPerRow = Math.ceil(width / 256) * 256;
+    const bytesPerRow = Math.ceil((width * 2) / 256) * 256;
     gpu.gpu.queue.writeTexture(
       { texture },
-      padRows(markCoverage(ctx, width, height), width, height, bytesPerRow),
+      padRows(markCoverage(ctx, width, height), width * 2, height, bytesPerRow),
       { bytesPerRow, rowsPerImage: height },
       [width, height],
     );
@@ -159,25 +172,33 @@ export function createHeroPipeline(options: {
   buildMark();
 
   const background = api.effect(gpu, options.shaders.background, { label: "hero-bg" });
-  const flare = api.effect(gpu, options.shaders.flare, { label: "hero-flare" });
-  const bright = api.effect(gpu, options.shaders.bright, { label: "hero-bright" });
-  const bloomH = api.effect(gpu, options.shaders.blur, { label: "hero-bloom-h" });
-  const bloomV = api.effect(gpu, options.shaders.blur, { label: "hero-bloom-v" });
-  const flareH = api.effect(gpu, options.shaders.blur, { label: "hero-flare-h" });
-  const flareV = api.effect(gpu, options.shaders.blur, { label: "hero-flare-v" });
+  const rim = api.effect(gpu, options.shaders.rim, { label: "hero-rim" });
+  const blurH = api.effect(gpu, options.shaders.blur, { label: "hero-blur-h" });
+  const blurV = api.effect(gpu, options.shaders.blur, { label: "hero-blur-v" });
   const composite = api.effect(gpu, options.shaders.composite, { label: "hero-composite" });
 
   function bind() {
     background.set({ atlas, samp: linear, grid });
-    flare.set({ mark: mark!, samp: linear });
-    bright.set({ src: plate, samp: linear, params: { threshold: 0.80, knee: 0.30, amount: 1.0 } });
-    bloomH.set({ src: nearA, samp: linear, params: { direction: [1, 0], texel: nearA.texelSize, radius: 1.0 } });
-    bloomV.set({ src: nearB, samp: linear, params: { direction: [0, 1], texel: nearB.texelSize, radius: 1.0 } });
-    // The flare is blurred wider than the bloom: it stands in for scattering,
-    // and a tight blur leaves the marched steps visible as banding.
-    flareH.set({ src: flareA, samp: linear, params: { direction: [1, 0], texel: flareA.texelSize, radius: 2.6 } });
-    flareV.set({ src: flareB, samp: linear, params: { direction: [0, 1], texel: flareA.texelSize, radius: 2.6 } });
-    composite.set({ plate, bloom: nearA, flare: flareA, mark: mark!, samp: linear });
+    rim.set({ linearSampler: linear, sceneTexture: mark! });
+    blurH.set({ linearSampler: linear, sourceTexture: rimTarget });
+    blurV.set({ linearSampler: linear, sourceTexture: rimA });
+    composite.set({
+      linearSampler: linear,
+      sceneTexture: mark!,
+      rimTexture: rimTarget,
+      rimBlurTexture: rimB,
+      plateTexture: plate,
+    });
+
+    const texel: [number, number] = [1 / width, 1 / height];
+    const blurParams = {
+      texelSize: texel,
+      taps: BLUR_TAPS.map((t) => [...t] as [number, number, number, number]),
+      centerWeight: BLUR_CENTER_WEIGHT,
+      tapCount: BLUR_TAPS.length,
+    };
+    blurH.set({ params: { ...blurParams, direction: [texel[0], 0] } });
+    blurV.set({ params: { ...blurParams, direction: [0, texel[1]] } });
   }
   bind();
 
@@ -185,27 +206,29 @@ export function createHeroPipeline(options: {
     width = Math.max(1, Math.floor(nextWidth));
     height = Math.max(1, Math.floor(nextHeight));
     plate.resize([width, height]);
-    nearA.resize([half(width), half(height)]);
-    nearB.resize([half(width), half(height)]);
-    flareA.resize([half(width), half(height)]);
-    flareB.resize([half(width), half(height)]);
+    rimTarget.resize([width, height]);
+    rimA.resize([width, height]);
+    rimB.resize([width, height]);
     buildMark();
     bind();
   }
 
   function render(frame: HeroFrame) {
-    const short = Math.min(width, height);
-    const centre: [number, number] = [width / 2, height / 2];
+    const reference = Math.min(width, height);
+    // The reference measures distance in units of the short edge, so a wide
+    // viewport does not stretch the halo into an ellipse.
+    const aspect: [number, number] = [width / reference, height / reference];
+    const centre: [number, number] = [0.5, 0.5];
 
-    // The source lives behind the mark and follows the pointer at partial
-    // amplitude, so it sweeps across the letterforms instead of leaving them.
+    // The source drifts on its own and hands over to the pointer, in UV space
+    // because that is what the rim and composite both work in.
     const drift: [number, number] = [
-      centre[0] + Math.sin(frame.time * 0.21) * short * 0.16,
-      centre[1] + Math.cos(frame.time * 0.17) * short * 0.10,
+      centre[0] + Math.sin(frame.time * 0.21) * 0.17,
+      centre[1] + Math.cos(frame.time * 0.17) * 0.11,
     ];
     const followed: [number, number] = [
-      centre[0] + (frame.pointer[0] - centre[0]) * 0.58,
-      centre[1] + (frame.pointer[1] - centre[1]) * 0.58,
+      frame.pointer[0] / width,
+      frame.pointer[1] / height,
     ];
     const light: [number, number] = [
       drift[0] + (followed[0] - drift[0]) * frame.pointerActive,
@@ -221,54 +244,52 @@ export function createHeroPipeline(options: {
       },
     });
 
-    flare.set({
-      flare: {
-        resolution: [width, height],
+    rim.set({
+      params: {
         light,
-        core: preset.core,
-        reach: preset.reach,
-        shafts: preset.shafts,
-        halo: preset.halo,
-        intensity: preset.intensity,
-        outlineWidth: preset.outlineWidth,
-        outlineGlow: preset.outlineGlow,
+        sceneTexel: [1 / width, 1 / height],
+        aspect,
+        spotReach: preset.spotReach,
+        spotStroke: preset.spotStroke,
       },
     });
 
     composite.set({
       params: {
-        resolution: [width, height],
         light,
-        time: frame.time,
-        bloom: preset.bloom,
-        flareWeight: preset.flareWeight,
-        outlineWidth: preset.outlineWidth,
-        outlineWeight: preset.outlineWeight,
-        outlineRake: preset.outlineRake,
-        vignette: 0.52,
-        grain: 0.012,
+        aspect,
+        logoCenter: centre,
+        flareColor: preset.flareColor,
+        rimIntensity: preset.rimIntensity,
+        extension: preset.extension,
+        beamIntensity: preset.beamIntensity,
+        filmGrain: preset.filmGrain,
+        smoothness: preset.smoothness,
+        logoOpacity: preset.logoOpacity,
+        frameIndex,
+        spotFocus: preset.spotFocus,
+        scatter: preset.scatter,
+        rimFill: preset.rimFill,
+        verticalEdgeFade: preset.verticalEdgeFade,
+        markDarkness: preset.markDarkness,
         fade: frame.intro,
       },
     });
 
     api.frame(gpu, (f) => {
       f.pass({ target: plate, clear: [0, 0, 0, 1] }, (p) => p.draw(background));
-      f.pass({ target: nearA }, (p) => p.draw(bright));
-      f.pass({ target: nearB }, (p) => p.draw(bloomH));
-      f.pass({ target: nearA }, (p) => p.draw(bloomV));
-      f.pass({ target: flareA }, (p) => p.draw(flare));
-      f.pass({ target: flareB }, (p) => p.draw(flareH));
-      f.pass({ target: flareA }, (p) => p.draw(flareV));
+      f.pass({ target: rimTarget }, (p) => p.draw(rim));
+      f.pass({ target: rimA }, (p) => p.draw(blurH));
+      f.pass({ target: rimB }, (p) => p.draw(blurV));
       f.pass({ target: output }, (p) => p.draw(composite));
     });
+
+    frameIndex = (frameIndex + 1) >>> 0;
   }
 
   return {
     render,
     resize,
-    setPreset(next) {
-      preset = next;
-    },
     dispose() {
       atlas.destroy();
       grid.destroy();

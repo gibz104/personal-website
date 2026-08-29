@@ -4,7 +4,7 @@ import { existsSync, unlinkSync, mkdirSync } from "node:fs";
 
 mkdirSync("public/lab", { recursive: true });
 
-for (const id of ["trace", "rake", "ember"]) {
+for (const id of ["flare", "reach", "close"]) {
   const png = `public/lab/${id}.png`;
   const jpg = `public/lab/${id}.jpg`;
   execFileSync("npx", [

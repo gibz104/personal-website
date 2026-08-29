@@ -18,7 +18,7 @@ function arg(name: string, fallback: string): string {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback;
 }
 
-const id = arg("variant", "rays");
+const id = arg("variant", "flare");
 const variant = heroVariantById(id) ?? HERO_VARIANTS[0]!;
 const width = Number(arg("width", "1440"));
 const height = Number(arg("height", "900"));
@@ -31,8 +31,8 @@ const DIR = new URL("../src/gpu/shaders/", import.meta.url);
 const load = async (name: string) =>
   (await resolveShader({ entry: new URL(`${name}.wgsl`, DIR).pathname })).wgsl;
 
-const [background, flare, blur, bright, composite] = await Promise.all([
-  load("hero-bg"), load("flare"), load("blur"), load("bright"), load("hero-composite"),
+const [background, rim, blur, composite] = await Promise.all([
+  load("hero-bg"), load("flare-rim"), load("flare-blur"), load("flare-composite"),
 ]);
 
 const gpu = await node.init({ label: `hero-${variant.id}` });
@@ -41,7 +41,7 @@ const output = node.target(gpu, { size: [width, height], format: "rgba8unorm" })
 const pipeline = createHeroPipeline({
   gpu,
   api: node,
-  shaders: { background, flare, blur, bright, composite },
+  shaders: { background, rim, blur, composite },
   output,
   canvas: (w, h) => createCanvas(w, h) as never,
   preset: variant.preset,

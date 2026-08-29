@@ -3,10 +3,9 @@ import { isWebGPUAvailable, prefersReducedMotion } from "../engine";
 import { createHeroPipeline, type HeroPipeline } from "./pipeline";
 import { heroVariantById, HERO_VARIANTS } from "./presets";
 import background from "../shaders/hero-bg.wgsl";
-import blur from "../shaders/blur.wgsl";
-import bright from "../shaders/bright.wgsl";
-import composite from "../shaders/hero-composite.wgsl";
-import flare from "../shaders/flare.wgsl";
+import blur from "../shaders/flare-blur.wgsl";
+import composite from "../shaders/flare-composite.wgsl";
+import rim from "../shaders/flare-rim.wgsl";
 
 export type HeroEngine = {
   readonly ready: Promise<boolean>;
@@ -106,7 +105,7 @@ export function createHeroEngine(
     pipeline = createHeroPipeline({
       gpu,
       api,
-      shaders: { background, flare, blur, bright, composite },
+      shaders: { background, rim, blur, composite },
       output,
       canvas: (w, h) => {
         const surface = document.createElement("canvas");

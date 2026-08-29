@@ -11,6 +11,9 @@
 /** The slice of Canvas2D this needs. Satisfied by the DOM and by @napi-rs/canvas. */
 export type Ctx2D = {
   fillStyle: unknown;
+  strokeStyle: unknown;
+  lineWidth: number;
+  lineJoin: unknown;
   font: string;
   textAlign: unknown;
   textBaseline: unknown;
@@ -18,6 +21,7 @@ export type Ctx2D = {
   fillRect(x: number, y: number, w: number, h: number): void;
   measureText(text: string): { width: number };
   fillText(text: string, x: number, y: number): void;
+  strokeText(text: string, x: number, y: number): void;
   getImageData(x: number, y: number, w: number, h: number): { data: ArrayLike<number> };
 };
 
@@ -32,6 +36,18 @@ const STACK = '"Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif';
 /** Cap height as a fraction of the shorter viewport edge. */
 const SCALE = 0.46;
 
+/** Outline weight as a fraction of cap height. */
+const STROKE = 0.028;
+
+/**
+ * Draws the mark into two channels of one canvas: red is the outline, green is
+ * the filled body.
+ *
+ * The outline is what the flare treats as its emitter. The reference example's
+ * logo is genuinely thin strokes, so its rim is naturally a thin shape; feeding
+ * a solid letterform through the same parameters lights the whole body instead
+ * of its edge. The fill is kept separately, only to punch the body black.
+ */
 export function drawMark(ctx: Ctx2D, width: number, height: number): void {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, width, height);
@@ -51,14 +67,24 @@ export function drawMark(ctx: Ctx2D, width: number, height: number): void {
     if ("letterSpacing" in ctx) ctx.letterSpacing = `${-size * 0.045}px`;
   }
 
-  ctx.fillStyle = "#fff";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   // Optical centring: "middle" sits a touch low for all-caps.
-  ctx.fillText(MARK_TEXT, width / 2, height / 2 + size * 0.035);
+  const x = width / 2;
+  const y = height / 2 + size * 0.035;
+
+  // Green: the body. Red: the contour, stroked on the path so the fill punch
+  // later removes its inner half and leaves a clean outer edge.
+  ctx.fillStyle = "#0f0";
+  ctx.fillText(MARK_TEXT, x, y);
+
+  ctx.strokeStyle = "#f00";
+  ctx.lineWidth = Math.max(1.5, size * STROKE);
+  ctx.lineJoin = "round";
+  ctx.strokeText(MARK_TEXT, x, y);
 }
 
-/** Single-channel coverage, row-major. */
+/** Two-channel coverage, row-major: R is the outline, G is the body. */
 export function markCoverage(
   ctx: Ctx2D,
   width: number,
@@ -66,7 +92,10 @@ export function markCoverage(
 ): Uint8Array<ArrayBuffer> {
   drawMark(ctx, width, height);
   const { data } = ctx.getImageData(0, 0, width, height);
-  const out = new Uint8Array(width * height);
-  for (let i = 0; i < out.length; i++) out[i] = data[i * 4]!;
+  const out = new Uint8Array(width * height * 2);
+  for (let i = 0; i < width * height; i++) {
+    out[i * 2] = data[i * 4]!;
+    out[i * 2 + 1] = data[i * 4 + 1]!;
+  }
   return out;
 }
