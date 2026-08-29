@@ -6,6 +6,8 @@
 // afterwards, which is what keeps thirty-two steps from looking like thirty-two
 // steps.
 
+import { contour } from "./outline.wgsl";
+
 struct Flare {
   resolution: vec2f,
   /// Source position in pixels, behind the mark.
@@ -17,6 +19,11 @@ struct Flare {
   shafts: f32,
   halo: f32,
   intensity: f32,
+  /// Stroke width in pixels of the full-resolution frame.
+  outlineWidth: f32,
+  /// How much of the contour is fed into the blur. This is what makes the
+  /// outline read as lit rather than as a line drawn on top of the picture.
+  outlineGlow: f32,
 }
 
 @group(0) @binding(0) var mark: texture_2d<f32>;
@@ -56,6 +63,13 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let hereOccluded = textureSampleLevel(mark, samp, uv, 0.0).r;
   let halo = reach * (1.0 - hereOccluded * 0.82) * flare.halo;
 
-  let value = (shafts * flare.shafts * reach + halo) * flare.intensity;
+  // The contour goes into this target on purpose: everything here is blurred
+  // afterwards, so the stroke arrives at the composite already surrounded by
+  // its own halo. Drawing the outline only at the end leaves it flat.
+  let texel = 1.0 / flare.resolution;
+  let stroke = contour(mark, samp, uv, texel, flare.outlineWidth * 0.5);
+
+  let value = (shafts * flare.shafts * reach + halo) * flare.intensity
+    + stroke * flare.outlineGlow;
   return vec4f(vec3f(value), 1.0);
 }

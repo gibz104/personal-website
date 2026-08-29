@@ -4,8 +4,7 @@
 // so the plate stays flat and dark — it is what the flare falls on, not a
 // second thing competing for attention.
 
-import { CELL } from "./lab-common.wgsl";
-import { sampleCell, scanBand, dropColumn } from "./decode-core.wgsl";
+import { sampleCell, scanBand } from "./decode-core.wgsl";
 
 struct Params {
   resolution: vec2f,
@@ -24,14 +23,13 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let frag = uv * params.resolution;
   let here = frag + params.scroll;
 
-  let band = scanBand(frag.y, params.resolution.y, params.time, 13.0);
-  let drop = dropColumn(frag, params.resolution, params.time, CELL.x);
-  let reveal = clamp(max(band, drop.x), 0.0, 1.0);
+  // No falling streaks. They were the second-brightest thing in the frame and
+  // pulled the eye off the mark, which is the only thing here that should be
+  // asking for attention.
+  let reveal = clamp(scanBand(frag.y, params.resolution.y, params.time, 13.0), 0.0, 1.0);
 
   let cell = sampleCell(atlas, samp, grid, here, reveal, params.time);
-
-  var color = cell.tint * cell.ink * mix(0.42, 2.05, cell.decoded);
-  color = color + vec3f(0.62, 0.86, 1.0) * drop.y * 0.14;
+  let color = cell.tint * cell.ink * mix(0.40, 1.85, cell.decoded);
 
   return vec4f(color * params.intro, 1.0);
 }

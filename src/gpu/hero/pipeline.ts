@@ -24,8 +24,14 @@ export type FlarePreset = {
   /** Weight of the soft unoccluded pool. */
   halo: number;
   intensity: number;
-  /** Weight of the contour highlight along the mark's lit edge. */
-  rim: number;
+  /** Stroke width of the contour, in pixels. */
+  outlineWidth: number;
+  /** How much of the contour is blurred into a halo. */
+  outlineGlow: number;
+  /** Brightness of the contour. This is the subject of the frame. */
+  outlineWeight: number;
+  /** How much light direction varies brightness around the contour, 0..1. */
+  outlineRake: number;
   /** Weight of the bloom on the character plate. */
   bloom: number;
   flareWeight: number;
@@ -224,6 +230,8 @@ export function createHeroPipeline(options: {
         shafts: preset.shafts,
         halo: preset.halo,
         intensity: preset.intensity,
+        outlineWidth: preset.outlineWidth,
+        outlineGlow: preset.outlineGlow,
       },
     });
 
@@ -234,7 +242,9 @@ export function createHeroPipeline(options: {
         time: frame.time,
         bloom: preset.bloom,
         flareWeight: preset.flareWeight,
-        rim: preset.rim,
+        outlineWidth: preset.outlineWidth,
+        outlineWeight: preset.outlineWeight,
+        outlineRake: preset.outlineRake,
         vignette: 0.52,
         grain: 0.012,
         fade: frame.intro,

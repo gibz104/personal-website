@@ -9,42 +9,45 @@ export type HeroVariant = {
 };
 
 /**
- * Three ways for the light to behave behind the mark. Same machinery
- * throughout — the difference is how much of it is spokes, how much is pool,
- * and how hard the contour catches.
+ * All three are the same idea, restrained: a lit contour around the mark and
+ * very little else behind it. The differences are in degree — how uniform the
+ * outline is, and how much glow is allowed to escape from behind the letters.
  */
 export const HERO_VARIANTS: HeroVariant[] = [
   {
-    id: "halo",
-    name: "Halo",
-    summary: "A pool of light behind the mark, barely any spokes.",
+    id: "trace",
+    name: "Trace",
+    summary: "A clean lit outline, and almost nothing else.",
     detail:
-      "The source sits behind RG and mostly just glows. Shafts are damped almost out, so the letterforms float in a soft field that shifts as the light moves. The most restrained of the three, and the easiest to put a headline next to.",
+      "The contour is lit evenly the whole way round, so the monogram reads as a drawn line rather than as a lit object. Behind it, only enough glow to separate the letters from the matrix. The most restrained of the three.",
     preset: {
-      core: 0.105, reach: 0.30, shafts: 0.55, halo: 0.70,
-      intensity: 1.9, rim: 0.60, bloom: 0.30, flareWeight: 1.0,
+      core: 0.10, reach: 0.16, shafts: 0.16, halo: 0.22,
+      intensity: 0.85, outlineWidth: 2.0, outlineWeight: 2.6, outlineRake: 0.18,
+      outlineGlow: 0.85, bloom: 0.20, flareWeight: 0.72,
     },
   },
   {
-    id: "rays",
-    name: "Rays",
-    summary: "Full shafts, breaking around the letterforms.",
+    id: "rake",
+    name: "Rake",
+    summary: "The outline brightens on whichever side faces the light.",
     detail:
-      "The marched shafts run at full weight, so the light visibly streams past the strokes of the R and through the counter of the G. Closest to the flare example, and the most dramatic when the pointer sweeps the source across the mark.",
+      "Same stroke, but its brightness travels around the contour as the source moves, so the pointer visibly lights one side of the letters and lets the other fall back. The outline never breaks — the far side dims but still closes the shape.",
     preset: {
-      core: 0.062, reach: 0.34, shafts: 3.20, halo: 0.12,
-      intensity: 2.3, rim: 0.85, bloom: 0.30, flareWeight: 1.0,
+      core: 0.095, reach: 0.18, shafts: 0.20, halo: 0.26,
+      intensity: 0.95, outlineWidth: 2.2, outlineWeight: 3.0, outlineRake: 0.85,
+      outlineGlow: 0.95, bloom: 0.20, flareWeight: 0.78,
     },
   },
   {
-    id: "edge",
-    name: "Edge",
-    summary: "A hard contour catch, and very little else.",
+    id: "ember",
+    name: "Ember",
+    summary: "The outline, with a warmer bloom allowed out from behind.",
     detail:
-      "Almost no volumetric light. What reads instead is a thin bright line along whichever side of the mark currently faces the source, so the monogram is described by its own outline. The most graphic, and the darkest overall.",
+      "A slightly softer stroke sitting in a little more light. The glow behind the letters is still low, but present enough that the mark feels lit from within rather than drawn on top.",
     preset: {
-      core: 0.050, reach: 0.22, shafts: 0.70, halo: 0.10,
-      intensity: 1.7, rim: 2.2, bloom: 0.26, flareWeight: 0.80,
+      core: 0.135, reach: 0.24, shafts: 0.22, halo: 0.46,
+      intensity: 1.05, outlineWidth: 2.5, outlineWeight: 2.1, outlineRake: 0.42,
+      outlineGlow: 1.5, bloom: 0.24, flareWeight: 0.92,
     },
   },
 ];

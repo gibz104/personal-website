@@ -3,6 +3,7 @@
 // The mark is drawn last and drawn absolutely black. It is the only opaque
 // thing in the frame, and everything else is what happens around it.
 
+import { contour } from "./outline.wgsl";
 import { tonemapAces } from "@vgpu/wgsl-std/color";
 import { hash2 } from "@vgpu/wgsl-std/hash";
 
@@ -12,7 +13,13 @@ struct Params {
   time: f32,
   bloom: f32,
   flareWeight: f32,
-  rim: f32,
+  /// Stroke width in pixels.
+  outlineWidth: f32,
+  /// Brightness of the contour.
+  outlineWeight: f32,
+  /// How much the light's direction varies brightness around the contour.
+  /// 0 is a uniform outline; 1 leaves the far side almost dark.
+  outlineRake: f32,
   vignette: f32,
   grain: f32,
   fade: f32,
@@ -43,18 +50,23 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let flareValue = textureSampleLevel(flare, samp, uv, 0.0).r;
   color = color + flareColor(flareValue) * flareValue * params.flareWeight;
 
-  // Rim: the contour of the mark that faces the source catches a thin line.
-  // Built from the coverage gradient, so it hugs the letterform exactly.
+  // The crisp stroke, laid over the halo the flare pass already produced.
+  let outline = contour(mark, samp, uv, texel, params.outlineWidth);
+
+  // Which way this piece of contour faces, from the coverage gradient.
   let e = 1.6;
   let gx = textureSampleLevel(mark, samp, uv + vec2f(texel.x * e, 0.0), 0.0).r
     - textureSampleLevel(mark, samp, uv - vec2f(texel.x * e, 0.0), 0.0).r;
   let gy = textureSampleLevel(mark, samp, uv + vec2f(0.0, texel.y * e), 0.0).r
     - textureSampleLevel(mark, samp, uv - vec2f(0.0, texel.y * e), 0.0).r;
-  let edge = length(vec2f(gx, gy));
   let toLight = normalize(params.light - frag + vec2f(1e-4));
   // The gradient points into the mark, so negate to face outward.
   let facing = clamp(dot(normalize(vec2f(-gx, -gy) + vec2f(1e-5)), toLight), 0.0, 1.0);
-  color = color + flareColor(0.9) * edge * pow(facing, 1.6) * params.rim;
+
+  // Rake never reaches zero: the contour has to close all the way round, or the
+  // mark stops reading as one shape.
+  let raked = mix(1.0, 0.22 + facing * 0.95, params.outlineRake);
+  color = color + flareColor(0.55 + facing * 0.45) * outline * raked * params.outlineWeight;
 
   color = tonemapAces(color);
 
