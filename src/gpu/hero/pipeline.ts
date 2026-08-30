@@ -1,7 +1,12 @@
 import type { Gpu, Surface, Target } from "vgpu";
 import type { ShaderSource } from "@vgpu/wgsl";
 import { FONT_ATLAS_SIZE, fontAtlasBytes } from "../font/atlas";
-import { buildCodeGrid, GRID_COLS, GRID_ROWS } from "../font/grid";
+import {
+  buildCorpusTexture,
+  CORPUS_COUNT,
+  CORPUS_HEIGHT,
+  CORPUS_WIDTH,
+} from "../font/page";
 import { markCoverage, type Ctx2D } from "../mark/draw";
 import type { FieldApi } from "../pipeline";
 
@@ -99,14 +104,11 @@ export function createHeroPipeline(options: {
   const preset = options.preset;
   let frameIndex = 0;
 
-  // Which corner of the code page the viewport looks at. The page is larger
-  // than any screen, so without an offset the same rows would always be the
-  // visible ones. Derived from the seed, so the preview stays reproducible.
+  // Shifts which rows of the board this session is looking at, so two loads
+  // never open on the same arrangement even before the epochs diverge. Derived
+  // from the seed, so the preview stays reproducible.
   const seed = options.gridSeed ?? 7;
-  const gridOffset: [number, number] = [
-    (Math.imul(seed, 2654435761) >>> 8) % GRID_COLS,
-    (Math.imul(seed, 40503) >>> 6) % GRID_ROWS,
-  ];
+  const rowOffset = (Math.imul(seed, 2654435761) >>> 9) % 4096;
 
   // Every stage runs at full resolution, as in the reference. The rim's
   // dilation is the expensive part and it is what keeps the glow's edge crisp.
@@ -139,18 +141,18 @@ export function createHeroPipeline(options: {
     );
   }
 
-  const grid = gpu.gpu.createTexture({
-    label: "code-grid",
-    size: [GRID_COLS, GRID_ROWS],
-    format: "rgba8uint",
+  const corpus = gpu.gpu.createTexture({
+    label: "corpus",
+    size: [CORPUS_WIDTH, CORPUS_HEIGHT],
+    format: "rg8uint",
     usage: COPY_DST | TEXTURE_BINDING,
   });
-  // 256 cells x 4 bytes = 1024, already a multiple of the 256-byte alignment.
+  // 128 cells x 2 bytes = 256, exactly WebGPU's row alignment.
   gpu.gpu.queue.writeTexture(
-    { texture: grid },
-    buildCodeGrid(options.gridSeed),
-    { bytesPerRow: GRID_COLS * 4, rowsPerImage: GRID_ROWS },
-    [GRID_COLS, GRID_ROWS],
+    { texture: corpus },
+    buildCorpusTexture(),
+    { bytesPerRow: CORPUS_WIDTH * 2, rowsPerImage: CORPUS_HEIGHT },
+    [CORPUS_WIDTH, CORPUS_HEIGHT],
   );
 
   let mark: GPUTexture | undefined;
@@ -185,7 +187,7 @@ export function createHeroPipeline(options: {
   const composite = api.effect(gpu, options.shaders.composite, { label: "hero-composite" });
 
   function bind() {
-    background.set({ atlas, samp: linear, grid });
+    background.set({ atlas, samp: linear, corpus });
     rim.set({ linearSampler: linear, sceneTexture: mark! });
     blurH.set({ linearSampler: linear, sourceTexture: rimTarget });
     blurV.set({ linearSampler: linear, sourceTexture: rimA });
@@ -245,8 +247,9 @@ export function createHeroPipeline(options: {
     background.set({
       params: {
         resolution: [width, height],
-        gridOffset,
         time: frame.time,
+        corpusCount: CORPUS_COUNT,
+        rowOffset,
         intro: frame.intro,
       },
     });
@@ -299,7 +302,7 @@ export function createHeroPipeline(options: {
     resize,
     dispose() {
       atlas.destroy();
-      grid.destroy();
+      corpus.destroy();
       mark?.destroy();
     },
   };

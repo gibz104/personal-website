@@ -80,12 +80,27 @@ const LINES: Line[] = [
   { lang: "c", rosetta: true, text: 'while (stream_next(&s, &ev) == 0) index_write(&ix, &ev);' },
 
   // ---- identity: whose site this is --------------------------------------
+  //
+  // A larger share than a monogram strictly needs, because these are the lines
+  // that repay looking. They are still a minority of the corpus: often enough
+  // to be found within a minute of watching, rare enough that finding one
+  // still feels like catching something.
   { lang: "python", identity: true, text: 'AUTHOR = "Ross Gibson"   # rossgibson.dev' },
   { lang: "python", identity: true, text: 'LOCATION, HANDLE = "Chicago, IL", "gibz104"' },
-  { lang: "typescript", identity: true, text: 'export const site = { domain: "rossgibson.dev", handle: "gibz104" };' },
-  { lang: "rust", identity: true, text: 'const AUTHOR: &str = "Ross Gibson";' },
-  { lang: "c", identity: true, text: '#define SITE_HOST "rossgibson.dev"' },
   { lang: "python", identity: true, text: 'WRITES = ("python", "typescript", "rust", "c")' },
+  { lang: "python", identity: true, text: 'TZ = ZoneInfo("America/Chicago")' },
+  { lang: "python", identity: true, text: 'CHICAGO = (41.8781, -87.6298)   # lat, lon' },
+  { lang: "python", identity: true, text: 'def about() -> str: return f"{AUTHOR} - {LOCATION}"' },
+  { lang: "typescript", identity: true, text: 'export const site = { domain: "rossgibson.dev", handle: "gibz104" };' },
+  { lang: "typescript", identity: true, text: 'export const author = { name: "Ross Gibson", city: "Chicago" } as const;' },
+  { lang: "typescript", identity: true, text: 'type Author = { name: "Ross Gibson"; based: "Chicago, IL" };' },
+  { lang: "typescript", identity: true, text: 'const tz = "America/Chicago";' },
+  { lang: "rust", identity: true, text: 'const AUTHOR: &str = "Ross Gibson";' },
+  { lang: "rust", identity: true, text: 'const CITY: &str = "Chicago, IL";' },
+  { lang: "rust", identity: true, text: 'impl Site for Ross { fn domain(&self) -> &str { "rossgibson.dev" } }' },
+  { lang: "c", identity: true, text: '#define SITE_HOST "rossgibson.dev"' },
+  { lang: "c", identity: true, text: 'static const char *AUTHOR = "Ross Gibson";' },
+  { lang: "c", identity: true, text: 'static const char *CITY = "Chicago, IL";' },
 
   // ---- python (most of the field) ----------------------------------------
   { lang: "python", text: 'async def poll(self, interval: float = 30.0) -> None:' },

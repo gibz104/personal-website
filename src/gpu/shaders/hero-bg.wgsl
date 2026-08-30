@@ -4,38 +4,39 @@
 // plate stays flat and dark — it is what the flare falls on, not a second thing
 // competing for attention.
 
-import { CELL, cellAt } from "./lab-common.wgsl";
+import { CELL, placementAt } from "./lab-common.wgsl";
 import { flapState, rain, sampleBoard } from "./decode-core.wgsl";
 
 struct Params {
   resolution: vec2f,
-  /// Whole-cell offset into the code page, randomised per page load so the
-  /// same field never shows the same lines twice.
-  gridOffset: vec2f,
   time: f32,
+  /// Populated rows in the corpus texture.
+  corpusCount: f32,
+  /// Shifts which rows of the board this session is looking at.
+  rowOffset: f32,
   intro: f32,
 }
 
 @group(0) @binding(0) var atlas: texture_2d<f32>;
 @group(0) @binding(1) var samp: sampler;
-@group(0) @binding(2) var grid: texture_2d<u32>;
+@group(0) @binding(2) var corpus: texture_2d<u32>;
 @group(0) @binding(3) var<uniform> params: Params;
 
 @fragment
 fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let frag = uv * params.resolution;
-  // The field does not scroll. Characters flicker where they are, and the code
-  // beneath them stays put for the whole session.
-  let here = frag + params.gridOffset * CELL;
-  let cellId = floor(here / CELL);
+  // The field does not scroll. Characters flicker where they are; the lines
+  // arriving among them are placed procedurally and never repeat.
+  let cellId = floor(frag / CELL) + vec2f(0.0, params.rowOffset);
+  let cols = params.resolution.x / CELL.x;
 
-  let cell = cellAt(grid, here);
-  let flap = flapState(cell, cellId, params.time);
-  let sample = sampleBoard(atlas, samp, grid, here, cell, flap, params.time);
+  let place = placementAt(corpus, cellId, params.time, params.corpusCount, cols);
+  let flap = flapState(place, cellId);
+  let sample = sampleBoard(atlas, samp, place, flap, frag, params.time);
 
   // Landed characters brighten as well as change colour, so a settled line
   // lifts out of the field rather than only tinting.
-  var level = mix(0.40, 1.95, sample.decoded);
+  let level = mix(0.40, 1.95, sample.decoded);
 
   // Rain brightens the cipher it falls through, and leaves landed code alone
   // so it cannot wash out a line that is being read.
