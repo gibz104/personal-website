@@ -31,11 +31,17 @@ an approximation of the page, it is the page, rendered to a PNG.
 ```bash
 npm run preview:hero -- --variant flare --time 34 --px 0.4 --py 0.34
 npm run preview:hero -- --width 390 --height 844 --out preview/mobile.png
-npm run check:shaders      # compiles every .wgsl against a real device
+npm run check                # shaders, line integrity, types, lint
 ```
 
 `next build` never validates WGSL — neither loader path does, so invalid
 shaders ship silently. `check:shaders` is the only gate.
+
+`verify:lines` renders the board's layout at one pixel per cell across four
+viewports and eight moments, reads it back, and asserts every placed line
+appears whole: starting at its first character, never restarting partway, and
+running to its last. Broken lines shipped twice because a half-line still looks
+like code at a glance — the check exists because looking was not enough.
 
 ### The passes
 

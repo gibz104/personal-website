@@ -63,8 +63,16 @@ export function buildCorpusTexture(): Uint8Array<ArrayBuffer> {
       data[base + i * 4 + 1] = cell.token;
       data[base + i * 4 + 2] = length;
     }
-    data[base + length * 4] = CORPUS_END;
-    data[base + length * 4 + 2] = length;
+    // The whole tail is sentinel, not just the first cell past the end.
+    //
+    // A single terminator only stops a reader that lands exactly on it. Cells
+    // further along read zero, which is a valid glyph — a space — so a line
+    // appeared to extend to the full texture width, dragging invisible cells
+    // behind it and hiding real overlaps from the collision check.
+    for (let i = length; i < CORPUS_WIDTH; i++) {
+      data[base + i * 4] = CORPUS_END;
+      data[base + i * 4 + 2] = length;
+    }
   }
 
   return data;
