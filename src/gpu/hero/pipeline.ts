@@ -240,6 +240,7 @@ export function createHeroPipeline(options: {
         resolution: [width, height],
         scroll: [0, frame.time * SCROLL_SPEED],
         time: frame.time,
+        scrollSpeed: SCROLL_SPEED,
         intro: frame.intro,
       },
     });

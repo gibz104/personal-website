@@ -17,10 +17,12 @@ export default function LabIndex() {
           Three lights behind the mark.
         </h1>
         <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
-          The same three layers throughout: the character matrix and its band of
-          real code at the back, a source in the middle, and RG in front in deep
-          black, blocking it. The pointer moves the source behind the letters.
-          What differs is how the light behaves once the mark gets in its way.
+          A board of characters that flickers like a split-flap display. Each
+          cycle one band of lines lands — characters stop one at a time, left to
+          right, taking their syntax colour as they settle — then holds, releases
+          back into noise, and a different part of the page begins. In front,
+          RG in deep black with a lit contour, and the pointer carries the source
+          that lights it.
         </p>
 
         <ul className="mt-16 space-y-16">

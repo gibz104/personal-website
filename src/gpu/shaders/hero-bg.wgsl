@@ -1,15 +1,17 @@
-// The background plate: the character matrix, and the band of code behind it.
+// The background plate: the character board.
 //
-// Deliberately unlit. All the light in this scene comes from behind the mark,
-// so the plate stays flat and dark — it is what the flare falls on, not a
-// second thing competing for attention.
+// Deliberately unlit. All the light in this scene comes from the mark, so the
+// plate stays flat and dark — it is what the flare falls on, not a second thing
+// competing for attention.
 
-import { sampleCell, scanBand } from "./decode-core.wgsl";
+import { CELL } from "./lab-common.wgsl";
+import { flapState, sampleBoard } from "./decode-core.wgsl";
 
 struct Params {
   resolution: vec2f,
   scroll: vec2f,
   time: f32,
+  scrollSpeed: f32,
   intro: f32,
 }
 
@@ -22,14 +24,14 @@ struct Params {
 fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let frag = uv * params.resolution;
   let here = frag + params.scroll;
+  let cellId = floor(here / CELL);
 
-  // No falling streaks. They were the second-brightest thing in the frame and
-  // pulled the eye off the mark, which is the only thing here that should be
-  // asking for attention.
-  let reveal = clamp(scanBand(frag.y, params.resolution.y, params.time, 13.0), 0.0, 1.0);
+  let flap = flapState(cellId, frag.x, params.resolution, params.time, params.scrollSpeed);
+  let cell = sampleBoard(atlas, samp, grid, here, flap, params.time);
 
-  let cell = sampleCell(atlas, samp, grid, here, reveal, params.time);
-  let color = cell.tint * cell.ink * mix(0.40, 1.85, cell.decoded);
+  // Landed characters brighten as well as change colour, so the settled line
+  // lifts out of the field rather than only tinting.
+  let color = cell.tint * cell.ink * mix(0.40, 1.95, cell.decoded);
 
   return vec4f(color * params.intro, 1.0);
 }

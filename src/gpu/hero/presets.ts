@@ -14,7 +14,7 @@ const FLARE_COLOR = [179 / 255, 191 / 255, 1] as const;
 /** Everything the nextjs-flare example ships with, as the starting point. */
 const REFERENCE: FlarePreset = {
   spotReach: 0.5,
-  spotStroke: 0.9,
+  spotStroke: 0.7,
   extension: 0.6,
   beamIntensity: 0.8,
   spotFocus: 0.08,
@@ -35,7 +35,7 @@ export const HERO_VARIANTS: HeroVariant[] = [
     name: "Flare",
     summary: "The reference settings, unchanged.",
     detail:
-      "Every parameter as the nextjs-flare example ships it — the same rim falloff, the same 48-step walk, the same pale blue-lavender. The only differences are the mark and the character matrix behind it.",
+      "Every parameter as the nextjs-flare example ships it — the same rim falloff, the same 48-step walk, the same pale blue-lavender. The only differences are the mark and the character board behind it.",
     preset: { ...REFERENCE },
   },
   {
