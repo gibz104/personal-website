@@ -1,110 +1,94 @@
 # rossgibson.dev
 
-A personal site whose background is a live WebGPU simulation of its own contents.
+A single WebGPU page: a board of cipher characters that keeps resolving into
+real code, behind an RG monogram lit from its own contour.
 
-Every project on the site is a **body** in a particle field: its mass is its star
-count, its colour is its primary language, and its position is fixed on a
-phyllotaxis spiral. Particles are thrown off one body, carried by a
-divergence-free curl-noise flow, and captured by another — so the luminous
-filaments between projects are literal, and they gradient from the colour of the
-project that emitted them to the colour of the one pulling them in.
-
-The field is one canvas that lives for the whole session. Routes don't reload it;
-they change the scene it eases toward, so navigating reads as the camera moving.
+Three layers. At the back, a still field of characters flickering like a
+split-flap display; code lines land among them one character at a time, take
+their syntax colour, hold, and fly again. In the middle, a light source. In
+front, the monogram in deep black, and the light escaping around its edge.
 
 ## Stack
 
 | | |
 |---|---|
 | Framework | Next.js 16 (App Router), React 19, TypeScript |
-| Graphics | [vgpu](https://vgpu.sh) — WebGPU, WGSL compute + render |
-| Styling | Tailwind v4, Geist Sans / Geist Mono |
-| Data | GitHub REST, synced to committed JSON |
-
-## Running it
+| Graphics | [vgpu](https://vgpu.sh) — WebGPU, WGSL |
+| Styling | Tailwind v4, Geist |
 
 ```bash
 npm install
 npm run dev
 ```
 
-## How the graphics are built
+## How it renders
 
-`src/gpu/pipeline.ts` takes the **vgpu module itself** as a parameter. `vgpu` and
-`vgpu/node` expose the same API, so the exact passes, shaders and uniforms that
-run in the browser also run headless under Node through Dawn. That is what makes
-the preview harness meaningful — it is not an approximation of the site, it is
-the site, rendered to a PNG.
+`src/gpu/hero/pipeline.ts` takes the **vgpu module itself** as a parameter.
+`vgpu` and `vgpu/node` expose the same API, so the exact passes that run in the
+browser also run headless under Node through Dawn — the preview harness is not
+an approximation of the page, it is the page, rendered to a PNG.
 
 ```bash
-# Render any scene headless and look at it
-npm run preview -- --scene field --steps 900 --out preview/field.png
-npm run preview -- --scene constellation --width 1440 --height 900
-
-# Sweep a single dial without editing code
-npm run preview -- --scene field --flow 0.5 --gravity 0.08 --decay 0.9
+npm run preview:hero -- --variant flare --time 34 --px 0.4 --py 0.34
+npm run preview:hero -- --width 390 --height 844 --out preview/mobile.png
+npm run check:shaders      # compiles every .wgsl against a real device
 ```
 
-Two things about this are worth knowing:
-
-- **Tune against the settled image, not the transient.** The field takes roughly
-  700 frames to reach equilibrium and keeps getting brighter on the way there.
-  Anything tuned at 300 steps will be overexposed once it settles, so pass
-  `--steps 900`.
-- **`next build` never validates WGSL.** Neither loader path does — invalid
-  shaders ship silently. `npm run check:shaders` compiles every `.wgsl` against a
-  real device and prints only the failures. Run it before trusting a shader.
+`next build` never validates WGSL — neither loader path does, so invalid
+shaders ship silently. `check:shaders` is the only gate.
 
 ### The passes
 
 ```
-compute: advect particles (ping-pong storage)
-   ↓
-scene   ← decay pass (accumulation) + particles (additive) + bodies (additive)
-   ↓        the accumulation buffer is what turns moving points into filaments
-bright  ← luminance threshold, clamped
-   ↓
-near    ← gaussian H, V                 (½ resolution)
-far     ← gaussian H, V from near       (⅕ of that)
-   ↓
-canvas  ← composite: ACES, vignette, aberration, grain
+plate  ← the character board                    (hero-bg.wgsl)
+rim    ← the mark, dilated and lit by distance  (flare-rim.wgsl)
+rimA   ← gaussian H                             (flare-blur.wgsl)
+rimB   ← gaussian V
+canvas ← 48-step walk toward the light, graded  (flare-composite.wgsl)
 ```
 
-`src/gpu/shaders/` holds the WGSL. `simulate.wgsl` carries most of the ideas
-worth reading — particularly why curl is used as a *velocity* field rather than a
-force, and why swirl has to fall off exponentially.
+The flare is ported from vgpu's own `nextjs-flare` example, with its constants.
+The mark is not an occluder: it is the **emitter**. Its contour is dilated and
+divided by distance to the source, so whichever part is nearest the light burns
+brightest, and the walk gathers that light off the shape and smears it back
+along the view ray. That is why the beams come off the letterforms rather than
+past them.
 
-## How the content is built
+### The board
 
-```bash
-npm run sync     # GitHub → src/data/projects.json
-npm run poster   # regenerate the no-WebGPU fallback image
-```
+There is no stored page. Which line sits where, and when it appears, is a hash
+of the row and an epoch counter that never stops climbing, so nothing repeats
+however long it is watched. The only asset is `src/gpu/font/page.ts` — the
+corpus as a texture, one line per row, **sorted shortest first**. The pipeline
+counts how many lines fit the current column width and the shader only indexes
+below that count, which is what guarantees a line is never clipped mid-token.
 
-`src/content/curation.ts` is the editorial layer: which projects are featured, in
-what order, which are hidden, and hand-written taglines and blurbs for the ones
-whose GitHub description undersells them. READMEs are stripped of badges, HTML
-and code fences at sync time into a clean summary plus highlights, so no raw
-markdown is ever rendered.
+Cell size scales with the viewport, so a phone gets a denser grid rather than
+four enormous columns.
 
-`src/content/profile.ts` holds everything about the person — name, bio, stack,
-links. Edit there, not in components.
+## The code in the artwork
 
-**Only public repositories are synced.** Several private repos are deliberately
-absent; make one public and it appears on the next `npm run sync`.
+`src/gpu/font/corpus.ts`. Deliberately generic — nothing is read from any
+repository, so the art never changes with the work. The language mix is the
+author's actual fluency and is what decides how much of the screen each one
+covers: Python 37%, TypeScript 30%, Rust 19%, C 14%. A recurring motif writes
+the same stream-and-index operation four ways. Sixteen lines name the author,
+the handle, the domain, or Chicago.
 
-## Fallbacks
+Every line is a complete statement. A clipped line reads as broken code.
 
-- **No WebGPU** — the page falls back to `public/field-poster.jpg`, which is a
-  settled frame of the same simulation rendered by `npm run poster`. The fallback
-  is the real artwork, not a mockup.
-- **`prefers-reduced-motion`** — the field runs for six seconds to compose
-  itself, then freezes on that frame. Pointer stirring is not attached at all.
-- **Narrow viewports** — the constellation labels are desktop-only; the list
-  below is the navigation there.
+## Input
 
-## Deploying
+Pointer moves the light on desktop. On touch devices the **gyroscope** does —
+`deviceorientation` mapped to the source position, eased because raw
+orientation is noisy. iOS gates that behind a permission that can only be
+requested from a gesture, so it is asked for on first touch; until then, and if
+declined, the light keeps its idle drift.
 
-Vercel, zero config. The build is fully static: 16 project pages are
-pre-rendered from the committed JSON, so nothing hits the GitHub API at build or
-request time.
+`prefers-reduced-motion` composes a frame for six seconds and then holds it.
+
+## Not wired up
+
+`src/data/projects.json`, `src/content/curation.ts` and `src/lib/projects.ts`
+hold a curated portfolio synced from GitHub (`npm run sync`). Nothing renders it
+yet — it is the substrate for the project list that will live below this page.

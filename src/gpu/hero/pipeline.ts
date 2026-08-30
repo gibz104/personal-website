@@ -3,12 +3,20 @@ import type { ShaderSource } from "@vgpu/wgsl";
 import { FONT_ATLAS_SIZE, fontAtlasBytes } from "../font/atlas";
 import {
   buildCorpusTexture,
-  CORPUS_COUNT,
   CORPUS_HEIGHT,
   CORPUS_WIDTH,
+  usableLineCount,
 } from "../font/page";
 import { markCoverage, type Ctx2D } from "../mark/draw";
-import type { FieldApi } from "../pipeline";
+/**
+ * The slice of the vgpu module the pipeline needs. `vgpu` and `vgpu/node` both
+ * satisfy it, which is what lets the headless preview render byte-for-byte the
+ * same passes the browser does.
+ */
+export type VgpuApi = Pick<
+  typeof import("vgpu"),
+  "effect" | "frame" | "sampler" | "target"
+>;
 
 export type HeroShaders = {
   readonly background: ShaderSource | string;
@@ -92,7 +100,7 @@ function padRows(src: Uint8Array, width: number, height: number, bytesPerRow: nu
 
 export function createHeroPipeline(options: {
   gpu: Gpu;
-  api: FieldApi;
+  api: VgpuApi;
   shaders: HeroShaders;
   output: Surface | Target;
   canvas: CanvasFactory;
@@ -144,14 +152,14 @@ export function createHeroPipeline(options: {
   const corpus = gpu.gpu.createTexture({
     label: "corpus",
     size: [CORPUS_WIDTH, CORPUS_HEIGHT],
-    format: "rg8uint",
+    format: "rgba8uint",
     usage: COPY_DST | TEXTURE_BINDING,
   });
-  // 128 cells x 2 bytes = 256, exactly WebGPU's row alignment.
+  // 128 cells x 4 bytes = 512, a multiple of WebGPU's row alignment.
   gpu.gpu.queue.writeTexture(
     { texture: corpus },
     buildCorpusTexture(),
-    { bytesPerRow: CORPUS_WIDTH * 2, rowsPerImage: CORPUS_HEIGHT },
+    { bytesPerRow: CORPUS_WIDTH * 4, rowsPerImage: CORPUS_HEIGHT },
     [CORPUS_WIDTH, CORPUS_HEIGHT],
   );
 
@@ -222,8 +230,23 @@ export function createHeroPipeline(options: {
     bind();
   }
 
+  /**
+   * Board cell size in backing pixels.
+   *
+   * Fixed at 12x20 the board had four enormous columns on a phone and almost no
+   * line could fit. Scaling with the short edge keeps roughly the same number
+   * of columns at every size, so the field reads the same on a 390px screen as
+   * on a desktop.
+   */
+  function cellSize(): [number, number] {
+    const scale = Math.max(0.58, Math.min(1, Math.min(width, height) / 820));
+    return [12 * scale, 20 * scale];
+  }
+
   function render(frame: HeroFrame) {
     const reference = Math.min(width, height);
+    const cell = cellSize();
+    const usable = usableLineCount(width / cell[0]);
     // The reference measures distance in units of the short edge, so a wide
     // viewport does not stretch the halo into an ellipse.
     const aspect: [number, number] = [width / reference, height / reference];
@@ -247,8 +270,9 @@ export function createHeroPipeline(options: {
     background.set({
       params: {
         resolution: [width, height],
+        cell,
         time: frame.time,
-        corpusCount: CORPUS_COUNT,
+        usableCount: usable,
         rowOffset,
         intro: frame.intro,
       },

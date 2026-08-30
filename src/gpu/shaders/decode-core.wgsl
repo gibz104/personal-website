@@ -7,7 +7,7 @@
 // lines, never on regions — settling a rectangle blanks the empty cells inside
 // it and cuts a visible stripe across the noise.
 
-import { CELL, Placement } from "./lab-common.wgsl";
+import { Placement } from "./board.wgsl";
 import { glyphCoverage, tokenColor } from "./glyph.wgsl";
 import { hash2 } from "@vgpu/wgsl-std/hash";
 
@@ -61,8 +61,8 @@ export fn flapState(place: Placement, cellId: vec2f) -> FlapState {
 /// It only brightens cipher characters — it never resolves them. Letting the
 /// rain reveal code as well would give the page two competing ways of saying
 /// the same thing, and the flip board is the better one.
-export fn rain(frag: vec2f, resolution: vec2f, time: f32) -> f32 {
-  let colId = floor(frag.x / CELL.x);
+export fn rain(frag: vec2f, resolution: vec2f, cell: vec2f, time: f32) -> f32 {
+  let colId = floor(frag.x / cell.x);
   let seed = hash2(vec2f(colId, 3.71));
   let carries = step(0.87, seed.x);
   let speed = 0.085 + seed.y * 0.19;
@@ -70,7 +70,7 @@ export fn rain(frag: vec2f, resolution: vec2f, time: f32) -> f32 {
   let head = fract(time * speed + seed.x * 19.0) * span - resolution.y * 0.28;
   let behind = head - frag.y;
   let tail = exp(-max(behind, 0.0) / (resolution.y * 0.19)) * step(0.0, behind);
-  let glow = exp(-abs(behind) / (CELL.y * 2.0));
+  let glow = exp(-abs(behind) / (cell.y * 2.0));
   return carries * max(tail * 0.70, glow);
 }
 
@@ -107,10 +107,11 @@ export fn sampleBoard(
   place: Placement,
   flap: FlapState,
   p: vec2f,
+  cell: vec2f,
   time: f32,
 ) -> CellSample {
-  let cellId = floor(p / CELL);
-  let inCell = fract(p / CELL);
+  let cellId = floor(p / cell);
+  let inCell = fract(p / cell);
   let cellHash = hash2(cellId * 0.1373 + vec2f(11.7, 3.9));
 
   // While flying, the cell cycles glyphs at its current rate; once landed it

@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { FieldProvider } from "@/components/field-provider";
-import { SiteHeader } from "@/components/site-header";
 import { PROFILE } from "@/content/profile";
-import { PROJECTS } from "@/lib/projects";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -20,14 +17,11 @@ export const metadata: Metadata = {
     title: PROFILE.name,
     description: PROFILE.tagline,
     type: "website",
-    // A real settled frame of the field, rendered by `npm run poster`.
-    images: [{ url: "/field-poster.jpg", width: 1920, height: 1080, alt: "The field" }],
   },
   twitter: {
     card: "summary_large_image",
     title: PROFILE.name,
     description: PROFILE.tagline,
-    images: ["/field-poster.jpg"],
   },
 };
 
@@ -37,11 +31,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-ink text-text">
-        <FieldProvider projects={PROJECTS}>
-          <SiteHeader />
-          <main className="relative z-10">{children}</main>
-        </FieldProvider>
+      <body className="min-h-full overflow-hidden bg-ink text-text">
+        {children}
       </body>
     </html>
   );

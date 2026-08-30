@@ -1,5 +1,10 @@
 import type { Gpu, Surface } from "vgpu";
-import { isWebGPUAvailable, prefersReducedMotion } from "../engine";
+import {
+  isTouchPrimary,
+  isWebGPUAvailable,
+  prefersReducedMotion,
+  requestOrientationAccess,
+} from "../support";
 import { createHeroPipeline, type HeroPipeline } from "./pipeline";
 import { heroVariantById, HERO_VARIANTS } from "./presets";
 import background from "../shaders/hero-bg.wgsl";
@@ -33,6 +38,14 @@ export function createHeroEngine(
   let pointer: [number, number] = [0, 0];
   let pointerActive = 0;
   let pointerGoal = 0;
+
+  // On a phone there is no hover, so the light would sit in its idle drift for
+  // the whole visit. Tilt drives it instead: the source swings as the device
+  // does, which is the same gesture as moving a mouse, done with the hand that
+  // is already holding the screen.
+  const touchPrimary = isTouchPrimary();
+  let tilt: [number, number] | undefined;
+  let orientationBound = false;
   let intro = 0;
   let elapsed = 0;
   let last = 0;
@@ -63,9 +76,33 @@ export function createHeroEngine(
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     pointer = [(event.clientX - rect.left) * dpr, (event.clientY - rect.top) * dpr];
     pointerGoal = 1;
+    // A real touch outranks the gyroscope for as long as it lasts.
+    tilt = undefined;
   };
   const onLeave = () => {
     pointerGoal = 0;
+  };
+
+  const onOrientation = (event: DeviceOrientationEvent) => {
+    const { beta, gamma } = event;
+    if (beta === null || gamma === null) return;
+    // gamma is the left-right roll; beta the front-back pitch, which sits near
+    // 45 degrees when a phone is held at a comfortable reading angle.
+    const x = Math.max(-1, Math.min(1, gamma / 38));
+    const y = Math.max(-1, Math.min(1, (beta - 45) / 38));
+    tilt = [(0.5 + x * 0.44) * canvas.width, (0.5 + y * 0.44) * canvas.height];
+    pointerGoal = 1;
+  };
+
+  /** Bound on the first touch, because iOS only grants access from a gesture. */
+  const bindOrientation = () => {
+    if (orientationBound || disposed) return;
+    orientationBound = true;
+    void requestOrientationAccess().then((granted) => {
+      if (granted && !disposed) {
+        window.addEventListener("deviceorientation", onOrientation);
+      }
+    });
   };
 
   function tick(now: number) {
@@ -78,6 +115,16 @@ export function createHeroEngine(
     elapsed += dt;
     intro = Math.min(1, intro + dt * 0.7);
     pointerActive += (pointerGoal - pointerActive) * (1 - Math.exp(-dt * 5));
+
+    // Tilt eases in rather than snapping: raw orientation is noisy enough that
+    // following it directly makes the light jitter.
+    if (tilt) {
+      const ease = 1 - Math.exp(-dt * 2.6);
+      pointer = [
+        pointer[0] + (tilt[0] - pointer[0]) * ease,
+        pointer[1] + (tilt[1] - pointer[1]) * ease,
+      ];
+    }
 
     if (reduced && elapsed > SETTLE_SECONDS) return;
 
@@ -121,6 +168,16 @@ export function createHeroEngine(
     if (!reduced) {
       window.addEventListener("pointermove", onPointerMove, { passive: true });
       document.documentElement.addEventListener("mouseleave", onLeave);
+      if (touchPrimary) {
+        window.addEventListener("touchstart", bindOrientation, { passive: true, once: true });
+        // Where no permission gate exists the events flow immediately.
+        void requestOrientationAccess().then((granted) => {
+          if (granted && !disposed && !orientationBound) {
+            orientationBound = true;
+            window.addEventListener("deviceorientation", onOrientation);
+          }
+        });
+      }
     }
 
     observer = new ResizeObserver(applySize);
@@ -142,6 +199,8 @@ export function createHeroEngine(
       cancelAnimationFrame(raf);
       observer?.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchstart", bindOrientation);
+      window.removeEventListener("deviceorientation", onOrientation);
       document.documentElement.removeEventListener("mouseleave", onLeave);
       try {
         pipeline?.dispose();

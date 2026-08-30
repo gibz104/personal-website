@@ -102,6 +102,25 @@ const LINES: Line[] = [
   { lang: "c", identity: true, text: 'static const char *AUTHOR = "Ross Gibson";' },
   { lang: "c", identity: true, text: 'static const char *CITY = "Chicago, IL";' },
 
+  // ---- short and complete ------------------------------------------------
+  //
+  // A narrow screen can only hold short lines, so the corpus needs enough of
+  // them to stay varied on a phone. Every one is a whole statement: a line that
+  // runs off the edge and gets clipped mid-token reads as broken code.
+  { lang: "python", text: 'from dataclasses import dataclass' },
+  { lang: "python", text: 'moisture = raw / 4095.0' },
+  { lang: "python", text: 'await queue.put(reading)' },
+  { lang: "python", text: 'return sorted(rows, key=attrgetter("at"))' },
+  { lang: "typescript", text: 'const [rows, setRows] = useState([]);' },
+  { lang: "typescript", text: 'export type Grams = number;' },
+  { lang: "typescript", text: 'await queue.drain();' },
+  { lang: "rust", text: 'let db = Arc::clone(&self.db);' },
+  { lang: "rust", text: 'tx.commit()?;' },
+  { lang: "rust", text: 'use reth_exex::ExExEvent;' },
+  { lang: "c", text: 'esp_wifi_set_ps(WIFI_PS_NONE);' },
+  { lang: "c", text: 'vTaskDelay(pdMS_TO_TICKS(250));' },
+  { lang: "c", text: 'size_t len = sizeof(buf);' },
+
   // ---- python (most of the field) ----------------------------------------
   { lang: "python", text: 'async def poll(self, interval: float = 30.0) -> None:' },
   { lang: "python", text: '    async with session.get(url, timeout=10) as response:' },
