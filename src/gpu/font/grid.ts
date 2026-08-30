@@ -12,7 +12,21 @@ export const GRID_ROWS = 128;
 const LANGUAGES = Object.keys(LANGUAGE_WEIGHT) as Language[];
 
 /**
- * Builds the code page: glyph index in R, token class in G.
+ * Builds the code page. Four channels per cell:
+ *
+ *   R  glyph index
+ *   G  token class
+ *   B  line id, 1..255, or 0 where no line was placed
+ *   A  the cell's position along its line
+ *
+ * The line id is what lets the reveal work on whole lines rather than on
+ * regions. Revealing a rectangle settles the empty cells inside it too, which
+ * blanks them and draws a visible band across the noise; revealing a line
+ * settles exactly the characters that belong to it and leaves everything around
+ * them still flickering.
+ *
+ * The position along the line drives the order characters land in, so a line
+ * lands left to right along itself no matter where it sits on screen.
  *
  * Placement is greedy against the language weights rather than randomly
  * sampled, so the share of the screen each language covers actually matches the
@@ -24,7 +38,9 @@ const LANGUAGES = Object.keys(LANGUAGE_WEIGHT) as Language[];
  * 256-byte alignment WebGPU wants, so no row padding is needed.
  */
 export function buildCodeGrid(seed = 7): Uint8Array<ArrayBuffer> {
-  const data = new Uint8Array(GRID_COLS * GRID_ROWS * 2);
+  const data = new Uint8Array(GRID_COLS * GRID_ROWS * 4);
+  // 1..255; 0 means "no line here" and must never be handed out.
+  let lineId = 0;
 
   // Deterministic PRNG: the page must be identical in the browser and in the
   // headless preview, or they stop being comparable.
@@ -64,13 +80,16 @@ export function buildCodeGrid(seed = 7): Uint8Array<ArrayBuffer> {
   }
 
   const write = (row: number, startCol: number, line: CorpusLine) => {
+    lineId = (lineId % 255) + 1;
     for (let i = 0; i < line.cells.length; i++) {
       const col = startCol + i;
       if (col < 0 || col >= GRID_COLS) continue;
       const cell = line.cells[i]!;
-      const index = (row * GRID_COLS + col) * 2;
+      const index = (row * GRID_COLS + col) * 4;
       data[index] = Math.max(0, Math.min(94, cell.char - 32));
       data[index + 1] = cell.token;
+      data[index + 2] = lineId;
+      data[index + 3] = Math.min(255, i);
     }
     placed[line.lang] += line.cells.length;
     total += line.cells.length;
@@ -108,7 +127,7 @@ export function buildCodeGrid(seed = 7): Uint8Array<ArrayBuffer> {
 export function measureGrid(data: Uint8Array): Record<number, number> {
   const counts: Record<number, number> = {};
   let total = 0;
-  for (let i = 0; i < data.length; i += 2) {
+  for (let i = 0; i < data.length; i += 4) {
     const token = data[i + 1]!;
     const glyph = data[i]!;
     if (glyph === 0) continue; // space

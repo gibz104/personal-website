@@ -14,7 +14,7 @@ const FLARE_COLOR = [179 / 255, 191 / 255, 1] as const;
 /** Everything the nextjs-flare example ships with, as the starting point. */
 const REFERENCE: FlarePreset = {
   spotReach: 0.5,
-  spotStroke: 0.7,
+  spotStroke: 0.55,
   extension: 0.6,
   beamIntensity: 0.8,
   spotFocus: 0.08,

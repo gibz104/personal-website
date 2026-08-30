@@ -8,13 +8,14 @@ import { glyphCoverage } from "./glyph.wgsl";
 export const CELL: vec2f = vec2f(12.0, 20.0);
 const GRID: vec2i = vec2i(256, 128);
 
-/// Glyph index and token class of the code cell under `p` (pixels).
-export fn cellAt(grid: texture_2d<u32>, p: vec2f) -> vec2u {
+/// The code cell under `p` (pixels): glyph, token class, line id, position
+/// along that line.
+export fn cellAt(grid: texture_2d<u32>, p: vec2f) -> vec4u {
   let c = vec2i(floor(p / CELL));
   // WGSL's % keeps the sign of the dividend, so a negative scroll would index
   // out of bounds without the double modulo.
   let wrapped = ((c % GRID) + GRID) % GRID;
-  return textureLoad(grid, vec2u(wrapped), 0).xy;
+  return textureLoad(grid, vec2u(wrapped), 0);
 }
 
 /// Ink coverage of the glyph at `p` (pixels), 0..1.

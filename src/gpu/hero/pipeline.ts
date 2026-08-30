@@ -60,9 +60,6 @@ export type HeroPipeline = {
   dispose(): void;
 };
 
-/** Pixels per second the character plate drifts upward. */
-export const SCROLL_SPEED = 17;
-
 // Kernel from the reference: eight linear-sampled tap pairs plus a centre
 // weight, giving a 33-wide gaussian for seventeen fetches.
 const BLUR_CENTER_WEIGHT = 0.0799404796215474;
@@ -102,6 +99,15 @@ export function createHeroPipeline(options: {
   const preset = options.preset;
   let frameIndex = 0;
 
+  // Which corner of the code page the viewport looks at. The page is larger
+  // than any screen, so without an offset the same rows would always be the
+  // visible ones. Derived from the seed, so the preview stays reproducible.
+  const seed = options.gridSeed ?? 7;
+  const gridOffset: [number, number] = [
+    (Math.imul(seed, 2654435761) >>> 8) % GRID_COLS,
+    (Math.imul(seed, 40503) >>> 6) % GRID_ROWS,
+  ];
+
   // Every stage runs at full resolution, as in the reference. The rim's
   // dilation is the expensive part and it is what keeps the glow's edge crisp.
   const plate = api.target(gpu, { size: [width, height], format: "rgba16float", label: "hero-plate" });
@@ -136,13 +142,14 @@ export function createHeroPipeline(options: {
   const grid = gpu.gpu.createTexture({
     label: "code-grid",
     size: [GRID_COLS, GRID_ROWS],
-    format: "rg8uint",
+    format: "rgba8uint",
     usage: COPY_DST | TEXTURE_BINDING,
   });
+  // 256 cells x 4 bytes = 1024, already a multiple of the 256-byte alignment.
   gpu.gpu.queue.writeTexture(
     { texture: grid },
     buildCodeGrid(options.gridSeed),
-    { bytesPerRow: GRID_COLS * 2, rowsPerImage: GRID_ROWS },
+    { bytesPerRow: GRID_COLS * 4, rowsPerImage: GRID_ROWS },
     [GRID_COLS, GRID_ROWS],
   );
 
@@ -238,9 +245,8 @@ export function createHeroPipeline(options: {
     background.set({
       params: {
         resolution: [width, height],
-        scroll: [0, frame.time * SCROLL_SPEED],
+        gridOffset,
         time: frame.time,
-        scrollSpeed: SCROLL_SPEED,
         intro: frame.intro,
       },
     });

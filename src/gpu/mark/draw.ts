@@ -34,7 +34,7 @@ export const MARK_TEXT = "RG";
 const STACK = '"Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 /** Cap height as a fraction of the shorter viewport edge. */
-const SCALE = 0.37;
+const SCALE = 0.30;
 
 /**
  * Outline weight as a fraction of cap height.
@@ -43,7 +43,7 @@ const SCALE = 0.37;
  * light escaping an edge only while the edge is finer than the glow around it;
  * a heavy stroke turns the same maths into a lit slab.
  */
-const STROKE = 0.014;
+const STROKE = 0.0085;
 
 /**
  * Draws the mark into two channels of one canvas: red is the outline, green is
@@ -65,7 +65,7 @@ export function drawMark(ctx: Ctx2D, width: number, height: number): void {
   if ("letterSpacing" in ctx) ctx.letterSpacing = `${-size * 0.045}px`;
 
   // Never let the mark crowd the edges on a wide-but-short viewport.
-  const maxWidth = width * 0.44;
+  const maxWidth = width * 0.36;
   const measured = ctx.measureText(MARK_TEXT).width;
   if (measured > maxWidth) {
     size = size * (maxWidth / measured);

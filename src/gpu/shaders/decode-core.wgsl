@@ -1,28 +1,36 @@
 // The character board.
 //
-// Every cell holds a real character of code but shows a random glyph, flickering
-// like a split-flap display. In each cycle one band of lines lands: characters
-// stop one at a time, roughly left to right, and take their syntax colour as
-// they settle. The band holds, releases back into noise, and the next cycle
-// picks a different part of the page.
+// A still field of cipher characters, flickering in place like a split-flap
+// display. Each cycle a scattering of code lines lands: their characters stop
+// one at a time along the line, left to right, and take their syntax colour as
+// they settle. They hold, release back into noise, and a different scattering
+// begins.
 //
-// This replaces the travelling band that used to do the revealing. That version
-// showed the code by uncovering it, which meant a visible edge sweeping past;
-// here nothing moves across the page at all — the characters themselves resolve
-// where they already are.
+// Reveal works on whole LINES, never on regions. Revealing a rectangle settles
+// the empty cells inside it too, which blanks them and cuts a visible band
+// across the noise; revealing a line settles exactly the characters that belong
+// to it and leaves everything around them still flickering.
 
 import { CELL, cellAt } from "./lab-common.wgsl";
 import { glyphCoverage, tokenColor } from "./glyph.wgsl";
 import { hash2 } from "@vgpu/wgsl-std/hash";
 
-/// Seconds for one full settle-hold-release cycle.
-const CYCLE: f32 = 13.0;
-/// Fraction of the cycle spent landing characters.
-const SETTLE_END: f32 = 0.44;
-/// Fraction of the cycle after which the band starts flying again.
-const RELEASE_START: f32 = 0.82;
-/// Half-height of the revealed band, in rows.
-const BAND_ROWS: f32 = 3.5;
+// Every line runs its own clock rather than the whole page sharing one.
+//
+// A single global cycle meant the entire board landed together, held together,
+// and left together — which left dead stretches with nothing readable at all.
+// Giving each line its own phase makes reveals overlap: one lands somewhere
+// roughly every half second, and there is always something in the middle of
+// being read.
+//
+/// How often a given line comes back around.
+const PERIOD: f32 = 62.0;
+/// Seconds a line spends landing.
+const SETTLE_T: f32 = 2.6;
+/// Seconds after which it begins to fly again.
+const HOLD_T: f32 = 6.4;
+/// Character count a line's landing order is normalised against.
+const LINE_LENGTH: f32 = 68.0;
 
 export struct FlapState {
   /// 0 while flickering, 1 once landed on the real character.
@@ -32,54 +40,59 @@ export struct FlapState {
 }
 
 /// Where one cell is in its flip cycle.
-export fn flapState(
-  cellId: vec2f,
-  screenX: f32,
-  resolution: vec2f,
-  time: f32,
-  scrollSpeed: f32,
-) -> FlapState {
-  let cycle = floor(time / CYCLE);
-  let phase = fract(time / CYCLE);
-
-  // The band is chosen in screen space once per cycle, then converted to a grid
-  // row so that it travels upward with the text it belongs to instead of
-  // sitting still while the characters slide out from under it.
-  let pick = hash2(vec2f(cycle * 1.37 + 0.5, 7.31));
-  // Land above or below the mark, never behind it. The monogram covers roughly
-  // the middle third, and a band that settles under it is unreadable — which
-  // wastes the one moment in the cycle where the code can actually be read.
-  let above = 0.07 + pick.x * 0.19;
-  let below = 0.72 + pick.x * 0.20;
-  let centre01 = select(below, above, pick.y < 0.5);
-  let centreScreenY = centre01 * resolution.y;
-  let scrollAtStart = cycle * CYCLE * scrollSpeed;
-  let bandRow = floor((centreScreenY + scrollAtStart) / CELL.y);
-
-  let inBand = step(abs(cellId.y - bandRow), BAND_ROWS);
-
-  // Each character gets its own moment to land: mostly left to right, with
-  // enough jitter that the line lands like a board rather than wiping.
+export fn flapState(cell: vec4u, cellId: vec2f, time: f32) -> FlapState {
   let seed = hash2(cellId * 0.317 + vec2f(2.13, 5.71));
-  let order = clamp(screenX / resolution.x, 0.0, 1.0) * 0.60 + seed.x * 0.32;
+  var out: FlapState;
+  out.settled = 0.0;
+  out.churn = 13.0 + seed.y * 9.0;
 
-  let settleT = phase / SETTLE_END;
-  let landed = smoothstep(order, order + 0.045, settleT);
+  // No line behind this cell: it is pure cipher and never resolves.
+  let lineId = cell.z;
+  if (lineId == 0u) { return out; }
 
-  let releaseT = (phase - RELEASE_START) / (1.0 - RELEASE_START);
+  // This line's own clock. Keyed on its id, so every character of it agrees
+  // without any shared state.
+  let offset = hash2(vec2f(f32(lineId) * 0.7311, 3.17)).x;
+  let t = fract(time / PERIOD + offset) * PERIOD;
+
+  // Landing order runs along the line itself, not across the screen, so a line
+  // lands left to right regardless of where it sits.
+  let along = clamp(f32(cell.w) / LINE_LENGTH, 0.0, 1.0);
+  let lands = (along * 0.62 + seed.x * 0.24) * SETTLE_T;
+  let landed = smoothstep(lands, lands + 0.16, t);
+
   // Released in a different order from the way it landed, so the exit does not
   // read as the entrance played backwards.
-  let released = smoothstep(seed.y * 0.7, seed.y * 0.7 + 0.09, releaseT);
+  let leaves = HOLD_T + seed.y * 1.5;
+  let released = smoothstep(leaves, leaves + 0.22, t);
 
-  var out: FlapState;
-  out.settled = inBand * landed * (1.0 - released);
+  out.settled = landed * (1.0 - released);
 
   // A flap slows as it runs out of momentum. Cells about to land flicker
   // noticeably slower than the field around them, which is what makes the stop
-  // feel mechanical rather than switched.
-  let approach = clamp((settleT - order + 0.30) / 0.30, 0.0, 1.0);
-  out.churn = mix(21.0, 6.5, approach * inBand);
+  // read as mechanical rather than switched. Gated on the line still being
+  // active, so once it releases the cell rejoins the cipher at full rate.
+  let approaching = (1.0 - clamp((lands - t) / 1.1, 0.0, 1.0)) * (1.0 - released);
+  out.churn = mix(out.churn, 6.0, approaching);
   return out;
+}
+
+/// Matrix rain: a few columns carry a bright head falling through the field.
+///
+/// It only brightens cipher characters — it never resolves them. Letting the
+/// rain reveal code as well would give the page two competing ways of saying
+/// the same thing, and the flip board is the better one.
+export fn rain(frag: vec2f, resolution: vec2f, time: f32) -> f32 {
+  let colId = floor(frag.x / CELL.x);
+  let seed = hash2(vec2f(colId, 3.71));
+  let carries = step(0.87, seed.x);
+  let speed = 0.085 + seed.y * 0.19;
+  let span = resolution.y * 1.5;
+  let head = fract(time * speed + seed.x * 19.0) * span - resolution.y * 0.28;
+  let behind = head - frag.y;
+  let tail = exp(-max(behind, 0.0) / (resolution.y * 0.19)) * step(0.0, behind);
+  let glow = exp(-abs(behind) / (CELL.y * 2.0));
+  return carries * max(tail * 0.70, glow);
 }
 
 /// A sampled cell, split so callers can light it themselves.
@@ -96,12 +109,12 @@ export fn sampleBoard(
   samp: sampler,
   grid: texture_2d<u32>,
   p: vec2f,
+  cell: vec4u,
   flap: FlapState,
   time: f32,
 ) -> CellSample {
   let cellId = floor(p / CELL);
   let inCell = fract(p / CELL);
-  let data = cellAt(grid, p);
   let cellHash = hash2(cellId * 0.1373 + vec2f(11.7, 3.9));
 
   // While flying, the cell cycles glyphs at its current rate; once landed it
@@ -110,16 +123,16 @@ export fn sampleBoard(
   let churned = hash2(cellId + vec2f(tick, tick * 0.37));
   let scrambled = u32(clamp(churned.x, 0.0, 0.999) * 94.0);
   let landed = flap.settled > 0.5;
-  let index = select(scrambled, data.x, landed);
+  let index = select(scrambled, cell.x, landed);
 
   // Part of the unsettled field is blank: a fully packed board is static, and
   // the gaps are what let a landed line read as a line.
-  let sparse = step(0.44, cellHash.y);
+  let sparse = step(0.42, cellHash.y);
   let present = max(sparse, flap.settled);
 
   var out: CellSample;
   out.ink = glyphCoverage(atlas, samp, index, inCell) * present;
-  out.tint = mix(vec3f(0.30, 0.36, 0.47), tokenColor(data.y), flap.settled);
+  out.tint = mix(vec3f(0.30, 0.36, 0.47), tokenColor(cell.y), flap.settled);
   out.decoded = flap.settled;
   return out;
 }
