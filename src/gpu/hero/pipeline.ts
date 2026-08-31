@@ -66,6 +66,12 @@ export type HeroFrame = {
   pointer: readonly [number, number];
   pointerActive: number;
   intro: number;
+  /**
+   * How present the scene is, 0..1. The canvas lives for the whole session and
+   * every route shares it, so a page with text over it turns this down rather
+   * than tearing the scene down and building another.
+   */
+  presence: number;
 };
 
 export type HeroPipeline = {
@@ -299,7 +305,9 @@ export function createHeroPipeline(options: {
         aspect,
         logoCenter: centre,
         flareColor: preset.flareColor,
-        rimIntensity: preset.rimIntensity,
+        // The flare falls away faster than the plate: behind text it should
+        // read as a glow in the room, not as a light pointed at the reader.
+        rimIntensity: preset.rimIntensity * (0.30 + 0.70 * frame.presence),
         extension: preset.extension,
         beamIntensity: preset.beamIntensity,
         filmGrain: preset.filmGrain,
@@ -311,7 +319,7 @@ export function createHeroPipeline(options: {
         rimFill: preset.rimFill,
         verticalEdgeFade: preset.verticalEdgeFade,
         markDarkness: preset.markDarkness,
-        fade: frame.intro,
+        fade: frame.intro * frame.presence,
       },
     });
 

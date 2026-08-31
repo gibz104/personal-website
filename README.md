@@ -93,8 +93,29 @@ declined, the light keeps its idle drift.
 
 `prefers-reduced-motion` composes a frame for six seconds and then holds it.
 
-## Not wired up
+## Routes
 
-`src/data/projects.json`, `src/content/curation.ts` and `src/lib/projects.ts`
-hold a curated portfolio synced from GitHub (`npm run sync`). Nothing renders it
-yet — it is the substrate for the project list that will live below this page.
+| | |
+|---|---|
+| `/` | the scene, and nothing else |
+| `/work` | the project list |
+| `/about` | bio, stack, links |
+
+One canvas serves all three. Routes do not tear it down and rebuild it, they
+turn its presence up or down — navigating reads as the light dimming while you
+read and coming back up when you return.
+
+On `/` the navigation is not drawn until the visitor does something: moves a
+pointer, touches, scrolls, or waits a couple of seconds. The first impression is
+the scene alone.
+
+Contact is two icons, not a page. A form on a personal site collects spam and
+little else, and a page holding two links is a page holding two links.
+
+## Content
+
+`src/content/profile.ts` is the person: name, bio, stack, links.
+`src/content/curation.ts` decides which repositories are featured and carries
+hand-written taglines for the ones whose GitHub description undersells them.
+`npm run sync` refreshes `src/data/projects.json` from the GitHub API; the
+result is committed, so nothing hits the network at build or request time.

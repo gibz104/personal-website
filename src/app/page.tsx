@@ -1,15 +1,15 @@
-import { HeroCanvas } from "@/components/hero-canvas";
+import { Presence } from "@/components/presence";
 import { PROFILE } from "@/content/profile";
 
 export default function HomePage() {
   return (
     <>
-      <HeroCanvas variant="flare" />
+      <Presence value={1} />
 
       {/*
-        The canvas is decorative and marked aria-hidden, so the page still owes
-        assistive technology and crawlers a real heading. It is positioned off
-        screen rather than display:none, which would take it out of the
+        The scene is the page. The canvas is decorative and marked aria-hidden,
+        so this heading is what assistive technology and crawlers read; it is
+        positioned off screen rather than hidden, which would remove it from the
         accessibility tree along with everything else.
       */}
       <h1 className="sr-only">

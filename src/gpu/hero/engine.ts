@@ -17,6 +17,8 @@ export type HeroEngine = {
   readonly ready: Promise<boolean>;
   /** Redraws the monogram in a different face, without a reload. */
   setFace(face: MarkFace): Promise<void>;
+  /** How present the scene should be, 0..1. Eased, never snapped. */
+  setPresence(value: number): void;
   dispose(): void;
 };
 
@@ -69,6 +71,8 @@ export function createHeroEngine(
   let tilt: [number, number] | undefined;
   let orientationBound = false;
   let intro = 0;
+  let presence = 1;
+  let presenceGoal = 1;
   let elapsed = 0;
   let last = 0;
 
@@ -136,6 +140,7 @@ export function createHeroEngine(
     last = now;
     elapsed += dt;
     intro = Math.min(1, intro + dt * 0.7);
+    presence += (presenceGoal - presence) * (1 - Math.exp(-dt * 3.2));
     pointerActive += (pointerGoal - pointerActive) * (1 - Math.exp(-dt * 5));
 
     // Tilt eases in rather than snapping: raw orientation is noisy enough that
@@ -150,7 +155,7 @@ export function createHeroEngine(
 
     if (reduced && elapsed > SETTLE_SECONDS) return;
 
-    pipeline.render({ time: elapsed, dt, pointer, pointerActive, intro });
+    pipeline.render({ time: elapsed, dt, pointer, pointerActive, intro, presence });
   }
 
   async function start(): Promise<boolean> {
@@ -222,6 +227,9 @@ export function createHeroEngine(
 
   return {
     ready,
+    setPresence(value) {
+      presenceGoal = Math.max(0, Math.min(1, value));
+    },
     async setFace(next) {
       await loadFace(next);
       if (!disposed) pipeline?.setFace(next);

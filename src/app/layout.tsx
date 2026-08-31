@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SceneProvider } from "@/components/scene-provider";
+import { SiteNav } from "@/components/site-nav";
 import { PROFILE } from "@/content/profile";
 import "./globals.css";
 
@@ -31,8 +33,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full overflow-hidden bg-ink text-text">
-        {children}
+      <body className="min-h-full bg-ink text-text">
+        <SceneProvider>
+          <SiteNav />
+          {children}
+        </SceneProvider>
       </body>
     </html>
   );

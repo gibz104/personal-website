@@ -60,6 +60,7 @@ pipeline.render({
   pointer: [px * width, py * height],
   pointerActive: 1,
   intro: 1,
+  presence: 1,
 });
 
 await gpu.settled();

@@ -1,11 +1,10 @@
 /**
- * Display faces the monogram can be set in.
+ * Display faces the monogram can be set in. The first is the one in use.
  *
- * Six of the eight faces originally shortlisted — Andante, Sublima, Bradley
- * Sans, Sovana, Anona and IvyPresto — are commercial licences that cannot be
- * fetched, and Bricolage Grotesk is on the Google Fonts site but is not served
- * by its API. What is here is the one that was available plus free faces that
- * occupy the same registers, so the choice can still be made by eye.
+ * The alternates are kept because swapping the mark is then a one-line change,
+ * and because the choice is worth revisiting: what matters is not how a face
+ * looks on paper but how its contour holds the light, which only shows in the
+ * running scene.
  *
  * Drop a licensed `.ttf` into `public/fonts/` and add a row here to try it.
  */
@@ -28,9 +27,19 @@ export type MarkFace = {
 
 export const MARK_FACES: MarkFace[] = [
   {
+    id: "archivo",
+    name: "Archivo",
+    note: "The mark. A sturdy grotesk: heavy enough to block the light cleanly, with counters open enough to let some through.",
+    family: '"Archivo"',
+    file: "archivo",
+    weight: 800,
+    tracking: 0.040,
+    stroke: 0.0115,
+  },
+  {
     id: "arial-black",
     name: "Arial Black",
-    note: "The current mark. Heaviest silhouette, most light blocked.",
+    note: "Heavier silhouette, blocks more light.",
     family: '"Arial Black"',
     weight: 900,
     tracking: 0.045,
@@ -54,16 +63,6 @@ export const MARK_FACES: MarkFace[] = [
     file: "syne",
     weight: 800,
     tracking: 0.030,
-    stroke: 0.0115,
-  },
-  {
-    id: "archivo",
-    name: "Archivo",
-    note: "Sturdy utilitarian grotesk — Bricolage's plainer side.",
-    family: '"Archivo"',
-    file: "archivo",
-    weight: 800,
-    tracking: 0.040,
     stroke: 0.0115,
   },
   {
