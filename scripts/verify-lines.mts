@@ -14,8 +14,10 @@ import {
   buildCorpusTexture,
   CORPUS_HEIGHT,
   CORPUS_WIDTH,
+  measureCorpus,
   usableLineCount,
 } from "../src/gpu/font/page";
+import { CODE_LINES } from "../src/gpu/font/corpus";
 
 void createCanvas;
 
@@ -133,6 +135,27 @@ for (const [vw, vh] of VIEWPORTS) {
 
 await gpu.settled();
 gpu.dispose();
+
+const mix = measureCorpus();
+console.log(
+  "language share: " +
+    Object.entries(mix)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `${k} ${(v * 100).toFixed(0)}%`)
+      .join(", "),
+);
+
+// Every line must stand on its own: no block openers, no indented fragments.
+const dangling = CODE_LINES.filter((line) => {
+  const text = line.cells.map((c) => String.fromCharCode(c.char)).join("");
+  return /[:{]\s*$/.test(text) || /^\s/.test(text);
+});
+if (dangling.length > 0) {
+  failures += dangling.length;
+  for (const line of dangling.slice(0, 5)) {
+    console.log(`  dangling: ${line.cells.map((c) => String.fromCharCode(c.char)).join("")}`);
+  }
+}
 
 console.log(
   `checked ${linesChecked} line runs across ${rowsChecked} rows ` +

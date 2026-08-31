@@ -12,7 +12,8 @@
     "build:font": "node scripts/build-font.mjs",
     "preview:hero": "tsx scripts/preview-hero.mts",
     "verify:lines": "tsx scripts/verify-lines.mts",
-    "check": "npm run check:shaders && npm run verify:lines && npx tsc --noEmit && npx eslint ."
+    "check": "npm run check:shaders && npm run verify:lines && npx tsc --noEmit && npx eslint .",
+    "fetch:fonts": "node scripts/fetch-fonts.mjs"
   },
   "dependencies": {
     "next": "16.3.3",

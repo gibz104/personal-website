@@ -6,19 +6,24 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { createCanvas } from "@napi-rs/canvas";
+import { registerMarkFonts } from "../src/gpu/mark/node-fonts";
 import { PNG } from "pngjs";
 import { resolveShader } from "@vgpu/wgsl/runtime";
 import * as node from "vgpu/node";
 
 import { createHeroPipeline } from "../src/gpu/hero/pipeline";
 import { heroVariantById, HERO_VARIANTS } from "../src/gpu/hero/presets";
+import { faceById, DEFAULT_FACE } from "../src/gpu/mark/faces";
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback;
 }
 
+registerMarkFonts();
+
 const id = arg("variant", "flare");
+const face = faceById(arg("face", DEFAULT_FACE.id)) ?? DEFAULT_FACE;
 const variant = heroVariantById(id) ?? HERO_VARIANTS[0]!;
 const width = Number(arg("width", "1440"));
 const height = Number(arg("height", "900"));
@@ -45,6 +50,7 @@ const pipeline = createHeroPipeline({
   output,
   canvas: (w, h) => createCanvas(w, h) as never,
   preset: variant.preset,
+  face,
   gridSeed: Number(arg("seed", "7")),
 });
 

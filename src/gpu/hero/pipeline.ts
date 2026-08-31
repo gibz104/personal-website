@@ -8,6 +8,7 @@ import {
   usableLineCount,
 } from "../font/page";
 import { markCoverage, type Ctx2D } from "../mark/draw";
+import { DEFAULT_FACE, type MarkFace } from "../mark/faces";
 /**
  * The slice of the vgpu module the pipeline needs. `vgpu` and `vgpu/node` both
  * satisfy it, which is what lets the headless preview render byte-for-byte the
@@ -70,6 +71,8 @@ export type HeroFrame = {
 export type HeroPipeline = {
   render(frame: HeroFrame): void;
   resize(width: number, height: number): void;
+  /** Redraws the monogram in a different face. Cheap: one texture upload. */
+  setFace(face: MarkFace): void;
   dispose(): void;
 };
 
@@ -105,11 +108,13 @@ export function createHeroPipeline(options: {
   output: Surface | Target;
   canvas: CanvasFactory;
   preset: FlarePreset;
+  face?: MarkFace;
   gridSeed?: number;
 }): HeroPipeline {
   const { gpu, api, output, canvas } = options;
   let [width, height] = output.size;
   const preset = options.preset;
+  let face = options.face ?? DEFAULT_FACE;
   let frameIndex = 0;
 
   // Shifts which rows of the board this session is looking at, so two loads
@@ -179,7 +184,7 @@ export function createHeroPipeline(options: {
     const bytesPerRow = Math.ceil((width * 2) / 256) * 256;
     gpu.gpu.queue.writeTexture(
       { texture },
-      padRows(markCoverage(ctx, width, height), width * 2, height, bytesPerRow),
+      padRows(markCoverage(ctx, width, height, face), width * 2, height, bytesPerRow),
       { bytesPerRow, rowsPerImage: height },
       [width, height],
     );
@@ -324,6 +329,11 @@ export function createHeroPipeline(options: {
   return {
     render,
     resize,
+    setFace(next) {
+      face = next;
+      buildMark();
+      bind();
+    },
     dispose() {
       atlas.destroy();
       corpus.destroy();

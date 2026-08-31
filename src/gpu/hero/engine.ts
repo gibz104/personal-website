@@ -7,6 +7,7 @@ import {
 } from "../support";
 import { createHeroPipeline, type HeroPipeline } from "./pipeline";
 import { heroVariantById, HERO_VARIANTS } from "./presets";
+import { DEFAULT_FACE, faceById, type MarkFace } from "../mark/faces";
 import background from "../shaders/hero-bg.wgsl";
 import blur from "../shaders/flare-blur.wgsl";
 import composite from "../shaders/flare-composite.wgsl";
@@ -14,17 +15,38 @@ import rim from "../shaders/flare-rim.wgsl";
 
 export type HeroEngine = {
   readonly ready: Promise<boolean>;
+  /** Redraws the monogram in a different face, without a reload. */
+  setFace(face: MarkFace): Promise<void>;
   dispose(): void;
 };
 
 /** How long the scene runs before a reduced-motion viewer's frame is frozen. */
 const SETTLE_SECONDS = 6;
 
+/**
+ * Waits for a face's file before anything is rasterised.
+ *
+ * The mark is drawn to a texture once. If the font arrives after that, nothing
+ * redraws and the mark silently keeps the fallback — which is why the CSS uses
+ * font-display: block and why this is awaited rather than fired off.
+ */
+async function loadFace(face: MarkFace): Promise<void> {
+  if (!face.file || typeof document === "undefined") return;
+  try {
+    await document.fonts.load(`${face.weight} 100px ${face.family}`, "RG");
+    await document.fonts.ready;
+  } catch {
+    // A face that will not load falls back; the mark still draws.
+  }
+}
+
 export function createHeroEngine(
   canvas: HTMLCanvasElement,
   variantId: string,
+  faceId?: string,
 ): HeroEngine {
   const variant = heroVariantById(variantId) ?? HERO_VARIANTS[0]!;
+  const face = (faceId ? faceById(faceId) : undefined) ?? DEFAULT_FACE;
   const reduced = prefersReducedMotion();
 
   let disposed = false;
@@ -142,6 +164,12 @@ export function createHeroEngine(
       return false;
     }
 
+    await loadFace(face);
+    if (disposed) {
+      gpu.dispose();
+      return false;
+    }
+
     measure();
     output = api.surface(gpu, canvas, {
       autoResize: false,
@@ -161,6 +189,7 @@ export function createHeroEngine(
         return surface as never;
       },
       preset: variant.preset,
+      face,
       gridSeed,
     });
     applySize();
@@ -193,6 +222,10 @@ export function createHeroEngine(
 
   return {
     ready,
+    async setFace(next) {
+      await loadFace(next);
+      if (!disposed) pipeline?.setFace(next);
+    },
     dispose() {
       if (disposed) return;
       disposed = true;

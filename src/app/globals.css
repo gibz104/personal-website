@@ -1,5 +1,51 @@
 @import "tailwindcss";
 
+/* Display faces for the monogram.
+   font-display: block matters here: the mark is rasterised to a texture once,
+   so a fallback swapping in afterwards would never be picked up. */
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/fonts/hanken.ttf") format("truetype");
+  font-weight: 800;
+  font-display: block;
+}
+@font-face {
+  font-family: "Syne";
+  src: url("/fonts/syne.ttf") format("truetype");
+  font-weight: 800;
+  font-display: block;
+}
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/archivo.ttf") format("truetype");
+  font-weight: 800;
+  font-display: block;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("/fonts/fraunces.ttf") format("truetype");
+  font-weight: 900;
+  font-display: block;
+}
+@font-face {
+  font-family: "Bodoni Moda";
+  src: url("/fonts/bodoni.ttf") format("truetype");
+  font-weight: 700;
+  font-display: block;
+}
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("/fonts/instrument.ttf") format("truetype");
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/fonts/cormorant.ttf") format("truetype");
+  font-weight: 700;
+  font-display: block;
+}
+
 @theme {
   --color-ink: #04050a;
   --color-ink-raised: #080a11;
