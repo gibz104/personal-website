@@ -10,8 +10,7 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <>
-      <Presence value={0.26} />
-
+      <Presence value={0.9} />
       <div aria-hidden className="veil" />
 
       <main className="relative z-10 mx-auto min-h-svh max-w-3xl px-6 pb-28 pt-28 sm:px-8 sm:pt-32">
@@ -20,7 +19,7 @@ export default function AboutPage() {
           {PROFILE.name}
         </h1>
         <p className="mt-3 font-mono text-sm tracking-[0.14em] text-dim">
-          {PROFILE.handle} · {PROFILE.location}
+          {PROFILE.role} · {PROFILE.location}
         </p>
 
         <div className="mt-12 space-y-6">
@@ -32,7 +31,27 @@ export default function AboutPage() {
         </div>
 
         <div className="rule mt-16 pt-10">
-          <p className="tag mb-6">Stack</p>
+          <p className="tag mb-7">Education</p>
+          <ul className="space-y-6">
+            {PROFILE.education.map((entry) => (
+              <li
+                key={entry.school}
+                className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8"
+              >
+                <span>
+                  <span className="block text-[0.9375rem] text-text">{entry.credential}</span>
+                  <span className="mt-0.5 block text-[0.9375rem] text-muted">
+                    {entry.school}
+                  </span>
+                </span>
+                <span className="tag shrink-0 tabular-nums">{entry.years}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rule mt-16 pt-10">
+          <p className="tag mb-7">Tools</p>
           <dl className="space-y-5">
             {PROFILE.stack.map((group) => (
               <div key={group.label} className="flex flex-col gap-1.5 sm:flex-row sm:gap-8">

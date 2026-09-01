@@ -89,9 +89,31 @@ body {
   inset: 0;
   z-index: 5;
   pointer-events: none;
-  background:
-    radial-gradient(120% 90% at 50% 40%, rgba(4, 5, 10, 0.94), rgba(4, 5, 10, 0.7) 70%),
-    linear-gradient(180deg, rgba(4, 5, 10, 0.55), rgba(4, 5, 10, 0.8));
+  /* Dark under the column the words occupy, clear at the margins.
+     Dimming the whole scene and then veiling it compounds: the cipher field is
+     faint by design, so two reductions in series leave a black page. The scene
+     now runs near full brightness and only the reading column is darkened, which
+     keeps the board alive in the margins where nobody is reading. */
+  background: linear-gradient(
+    90deg,
+    rgba(4, 5, 10, 0.06) 0%,
+    rgba(4, 5, 10, 0.84) 24%,
+    rgba(4, 5, 10, 0.88) 50%,
+    rgba(4, 5, 10, 0.84) 76%,
+    rgba(4, 5, 10, 0.06) 100%
+  );
+}
+
+/* No margins to speak of on a phone, so the column is the whole screen. */
+@media (max-width: 900px) {
+  .veil {
+    background: linear-gradient(
+      180deg,
+      rgba(4, 5, 10, 0.72) 0%,
+      rgba(4, 5, 10, 0.88) 22%,
+      rgba(4, 5, 10, 0.88) 100%
+    );
+  }
 }
 
 /* Small caps label used for every piece of metadata on the site. */

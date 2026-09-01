@@ -7,6 +7,7 @@ import { SocialLinks } from "./social-links";
 
 const LINKS = [
   { href: "/work", label: "Work" },
+  { href: "/projects", label: "Projects" },
   { href: "/about", label: "About" },
 ] as const;
 
@@ -48,13 +49,16 @@ export function SiteNav() {
 
   return (
     <header
-      className={`pointer-events-none fixed inset-x-0 z-30 transition-opacity duration-1000 ${
+      // Top right on every route. Moving it between pages made the one thing a
+      // visitor had just learned the location of change position underneath
+      // them, which is a bad trade for a slightly cleaner first frame.
+      className={`pointer-events-none fixed inset-x-0 top-0 z-30 transition-opacity duration-1000 ${
         revealed ? "opacity-100" : "opacity-0"
-      } ${isHome ? "bottom-0" : "top-0"}`}
+      }`}
     >
       <div className="mx-auto flex max-w-[104rem] items-center justify-between gap-6 px-5 py-5 sm:px-8">
         {isHome ? (
-          <span className="tag">{new Date().getFullYear()}</span>
+          <span />
         ) : (
           <Link
             href="/"
