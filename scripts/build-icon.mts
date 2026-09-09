@@ -19,20 +19,30 @@ const SIZE = 512;
 const TEXT = "RG";
 /** Cap height as a share of the icon. Large: at 16px there is nothing to spare. */
 const CAP = 0.52;
-/** Hard ceiling on the mark's width, so the letters never touch the edge. */
-const MAX_INK = 0.84;
+/**
+ * Hard ceiling on the mark's width, as a share of the diameter.
+ *
+ * This is what sets the inset, and it is a trade rather than a preference. A
+ * circle has no corners to absorb overhang, so letters sized for a rounded
+ * square crowd its edge. Dropping to roughly half the diameter looks calmer at
+ * a glance but turns to mush at 16px, where two letterforms have only about
+ * five pixels of height each. Around two thirds keeps the margin visible and
+ * the letters readable; it was chosen by rendering 56%, 64% and 72% at real tab
+ * sizes on both light and dark chrome rather than by eye at full size.
+ */
+const MAX_INK = 0.64;
 
 const canvas = createCanvas(SIZE, SIZE);
 const ctx = canvas.getContext("2d");
 
-/** Rounded square, the shape a tab icon is read as. */
-function plate(radius: number) {
+/**
+ * A disc. Everything outside it stays transparent, so the browser's own tab
+ * background shows through and the icon reads as a circle rather than as a
+ * square that happens to be dark.
+ */
+function disc() {
   ctx.beginPath();
-  ctx.moveTo(radius, 0);
-  ctx.arcTo(SIZE, 0, SIZE, SIZE, radius);
-  ctx.arcTo(SIZE, SIZE, 0, SIZE, radius);
-  ctx.arcTo(0, SIZE, 0, 0, radius);
-  ctx.arcTo(0, 0, SIZE, 0, radius);
+  ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2, 0, Math.PI * 2);
   ctx.closePath();
 }
 
@@ -52,7 +62,7 @@ function plate(radius: number) {
  * a field that runs to white rather than the other way round.
  */
 ctx.save();
-plate(SIZE * 0.22);
+disc();
 ctx.clip();
 const field = ctx.createRadialGradient(
   SIZE * 0.34, SIZE * 0.28, 0,
@@ -107,7 +117,7 @@ ctx.fillText(TEXT, x, y);
 
 // Darker rim, drawn on the path so half of it falls outside and is clipped.
 // It stops the pale edge of the field from dissolving into a light tab strip.
-plate(SIZE * 0.22);
+disc();
 ctx.strokeStyle = "rgba(10, 26, 48, 0.55)";
 ctx.lineWidth = SIZE * 0.03;
 ctx.stroke();
