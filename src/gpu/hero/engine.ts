@@ -93,6 +93,7 @@ export function createHeroEngine(
   const touchPrimary = isTouchPrimary();
   let tilt: [number, number] | undefined;
   let orientationBound = false;
+  let orientationPending = false;
   let intro = 0;
   let interactive = true;
   let presence = 1;
@@ -192,14 +193,29 @@ export function createHeroEngine(
     pointerGoal = 1;
   };
 
-  /** Bound on the first touch, because iOS only grants access from a gesture. */
+  /**
+   * Asked on touch, because iOS only grants orientation access from a gesture.
+   *
+   * Every touch, not just the first. The permission can fail for reasons the
+   * visitor can undo: a dismissed prompt, or Safari's Motion & Orientation
+   * Access switched off at the device level, which makes the request resolve to
+   * denied with no prompt at all. Asking once meant one bad answer disabled the
+   * tilt for the life of the page. iOS does not re-prompt once it has an
+   * answer, so retrying costs a resolved promise and nothing else.
+   *
+   * `orientationBound` is set only after the listener is really attached. It
+   * used to be set on the way in, which left a denial indistinguishable from a
+   * success and blocked every retry.
+   */
   const bindOrientation = () => {
-    if (orientationBound || disposed) return;
-    orientationBound = true;
+    if (orientationBound || orientationPending || disposed) return;
+    orientationPending = true;
     void requestOrientationAccess().then((granted) => {
-      if (granted && !disposed) {
-        window.addEventListener("deviceorientation", onOrientation);
-      }
+      orientationPending = false;
+      if (!granted || disposed || orientationBound) return;
+      orientationBound = true;
+      window.removeEventListener("touchstart", bindOrientation);
+      window.addEventListener("deviceorientation", onOrientation);
     });
   };
 
@@ -276,11 +292,15 @@ export function createHeroEngine(
       window.addEventListener("pointermove", onPointerMove, { passive: true });
       document.documentElement.addEventListener("mouseleave", onLeave);
       if (touchPrimary) {
-        window.addEventListener("touchstart", bindOrientation, { passive: true, once: true });
+        window.addEventListener("touchstart", bindOrientation, { passive: true });
         // Where no permission gate exists the events flow immediately.
+        // Android and desktop have no gate, so the events flow without a
+        // gesture and this binds immediately. On iOS it resolves to denied
+        // outside a gesture, which is why the touch listener above exists.
         void requestOrientationAccess().then((granted) => {
           if (granted && !disposed && !orientationBound) {
             orientationBound = true;
+            window.removeEventListener("touchstart", bindOrientation);
             window.addEventListener("deviceorientation", onOrientation);
           }
         });
