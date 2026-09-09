@@ -6,6 +6,10 @@
  * The full-resolution original lives outside the repo; only the cropped result
  * is committed, because a 2MB studio JPEG has no business in a git history or
  * on a phone connection. Re-run this when the photo changes.
+ *
+ * `--src` is required rather than defaulting to wherever the photo happens to
+ * sit on one machine: a path under someone's home directory is no use to anyone
+ * else and does not belong in a repository that may be read by strangers.
  */
 import { writeFileSync } from "node:fs";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
@@ -15,7 +19,11 @@ function arg(name: string, fallback: string): string {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback;
 }
 
-const SRC = arg("src", "/Users/rgibson/Documents/Professional Photos/LinkedIn Image.jpg");
+const SRC = arg("src", "");
+if (!SRC) {
+  console.error('usage: npm run build:portrait -- --src "/path/to/photo.jpg"');
+  process.exit(1);
+}
 const OUT = new URL("../public/portrait.jpg", import.meta.url);
 const SIZE = 512;
 

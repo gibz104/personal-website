@@ -45,3 +45,8 @@ preview/
 /preview
 /.playwright-mcp
 *.local.png
+
+# Agent instruction files. next dev regenerates AGENTS.md on every run, so it is
+# ignored rather than deleted; deleting it only produces an untracked file again.
+/AGENTS.md
+/CLAUDE.md
