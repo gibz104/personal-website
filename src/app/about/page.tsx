@@ -5,7 +5,10 @@ import { PROFILE } from "@/content/profile";
 
 export const metadata = {
   title: "About",
-  description: PROFILE.tagline,
+  description:
+    "How a finance analyst became a data engineer, what I work with day to day, "
+    + "and why nearly everything on this site started as curiosity.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

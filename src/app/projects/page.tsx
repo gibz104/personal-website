@@ -5,7 +5,10 @@ import { listedProjects } from "@/lib/projects";
 export const metadata = {
   title: "Projects",
   description:
-    "Nights-and-weekends projects: Ethereum indexers, ESP32 firmware, and tooling.",
+    "Nights-and-weekends projects: Ethereum indexers in Rust, ESP32 sensor "
+    + "firmware in C, a self-hosted Ethereum node, and filament tracking for "
+    + "Bambu Lab and Creality printers.",
+  alternates: { canonical: "/projects" },
 };
 
 export default async function ProjectsPage() {

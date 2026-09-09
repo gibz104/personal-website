@@ -4,7 +4,9 @@ import { careerYears, COMPANY_COUNT, EXPERIENCE } from "@/content/experience";
 export const metadata = {
   title: "Work",
   description:
-    "Finance, data and analytics: nine years at Kraft Heinz, and now Finance Data and Analytics at Google.",
+    "Nine years at Kraft Heinz from financial analyst to senior data engineer, "
+    + "and now Data Program Manager for Finance Data and Analytics at Google.",
+  alternates: { canonical: "/work" },
 };
 
 const WORDS = [

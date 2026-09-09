@@ -1,0 +1,50 @@
+# Ross Gibson
+
+> Data and analytics in Chicago. Ten years across finance, data and analytics:
+> nine at Kraft Heinz moving from financial analyst to senior data engineer,
+> and now Data Program Manager for Finance Data and Analytics at Google.
+> Side projects run to Ethereum infrastructure, ESP32 hardware, and WebGPU.
+
+Personal site. Four pages, no blog, no tracking.
+
+## Pages
+
+- [Home](https://rossgibson.dev/): a WebGPU scene, and nothing else. A field of
+  cipher characters resolving into real code behind an RG monogram lit from its
+  own contour.
+- [Work](https://rossgibson.dev/work): employment history, most recent first.
+- [Projects](https://rossgibson.dev/projects): side projects, with star counts
+  read live from the GitHub API.
+- [About](https://rossgibson.dev/about): biography, education, certifications,
+  and the tools used day to day.
+
+## Facts
+
+- Name: Ross Gibson
+- Location: Chicago, Illinois, United States
+- Current role: Data Program Manager, Finance Data and Analytics, at Google
+  (from September 2026)
+- Previously: Kraft Heinz, 2016 to 2025, seven roles from Financial Analyst to
+  Senior Data Engineer and Staff Technical Specialist
+- Education: M.S. Data Science, DePaul University; B.B.A. Finance, University
+  of Iowa
+- Certifications: Generative AI Leader and Cloud Digital Leader, Google Cloud
+- Works with: Python, SQL, dbt, Dagster, Snowflake, Azure, Google Cloud, AWS,
+  FastAPI, Tableau, Power BI, Grafana
+- After hours: Rust, C and ESP-IDF, TypeScript, WebGPU
+- GitHub: https://github.com/gibz104
+- LinkedIn: https://www.linkedin.com/in/rosskgibson
+
+## Notable projects
+
+- SpoolmanSync: automatic filament tracking for Bambu Lab and Creality printers
+  through Home Assistant and Spoolman. TypeScript.
+- reth-db-py: reads Reth's MDBX database from Python, skipping JSON-RPC. Rust.
+- Sproutlink: soil sensors assembled by hand, C firmware, TypeScript web app.
+- SafeGithubOTA: over-the-air ESP32 firmware updates from private GitHub
+  releases, with working rollback. C++.
+- Rethix: an Ethereum indexer running in-process as a Reth Execution Extension.
+- Libertas Node: a self-hosted Ethereum node publishing its own dashboards and
+  logs, contributing to ethPandaOps' Xatu dataset.
+- Weiwizard: a chat wrapper answering from the Ethereum standards through
+  retrieval-augmented generation.
