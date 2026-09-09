@@ -51,6 +51,7 @@ const pipeline = createHeroPipeline({
   canvas: (w, h) => createCanvas(w, h) as never,
   preset: variant.preset,
   face,
+  dpr: Number(arg("dpr", "1")),
   gridSeed: Number(arg("seed", "7")),
 });
 

@@ -24,10 +24,10 @@ export function SocialLinks({ className = "" }: { className?: string }) {
             target="_blank"
             rel="noreferrer"
             aria-label={link.label}
-            title={`${link.label} — ${link.handle}`}
-            className="block rounded-full p-2 text-dim transition-colors hover:text-text"
+            title={`${link.label} · ${link.handle}`}
+            className="block rounded-full p-1.5 text-dim transition-colors hover:text-text sm:p-2"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-[1.05rem]">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-[1.05rem]">
               {ICONS[link.label]}
             </svg>
           </a>

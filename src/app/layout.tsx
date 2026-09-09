@@ -11,8 +11,8 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   metadataBase: new URL("https://rossgibson.dev"),
   title: {
-    default: `${PROFILE.name} — ${PROFILE.tagline}`,
-    template: `%s — ${PROFILE.name}`,
+    default: `${PROFILE.name} · ${PROFILE.tagline}`,
+    template: `%s · ${PROFILE.name}`,
   },
   description: PROFILE.tagline,
   openGraph: {

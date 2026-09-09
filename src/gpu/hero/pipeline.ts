@@ -2,6 +2,7 @@ import type { Gpu, Surface, Target } from "vgpu";
 import type { ShaderSource } from "@vgpu/wgsl";
 import { FONT_ATLAS_SIZE, fontAtlasBytes } from "../font/atlas";
 import {
+  boardCellSize,
   buildCorpusTexture,
   CORPUS_HEIGHT,
   CORPUS_WIDTH,
@@ -76,7 +77,7 @@ export type HeroFrame = {
 
 export type HeroPipeline = {
   render(frame: HeroFrame): void;
-  resize(width: number, height: number): void;
+  resize(width: number, height: number, dpr: number): void;
   /** Redraws the monogram in a different face. Cheap: one texture upload. */
   setFace(face: MarkFace): void;
   dispose(): void;
@@ -115,12 +116,15 @@ export function createHeroPipeline(options: {
   canvas: CanvasFactory;
   preset: FlarePreset;
   face?: MarkFace;
+  /** Device pixel ratio, so the board can be sized in CSS pixels. */
+  dpr?: number;
   gridSeed?: number;
 }): HeroPipeline {
   const { gpu, api, output, canvas } = options;
   let [width, height] = output.size;
   const preset = options.preset;
   let face = options.face ?? DEFAULT_FACE;
+  let dpr = options.dpr ?? 1;
   let frameIndex = 0;
 
   // Shifts which rows of the board this session is looking at, so two loads
@@ -176,17 +180,28 @@ export function createHeroPipeline(options: {
 
   let mark: GPUTexture | undefined;
 
-  function buildMark() {
-    mark?.destroy();
+  /**
+   * Rasterises the mark into a texture the size of the target.
+   *
+   * Returns false when the rebuild could not happen, leaving the previous mark
+   * in place rather than throwing. Dragging a window edge asks for a rebuild
+   * every frame, and every rebuild needs a 2D canvas the size of the viewport:
+   * around 19MB at 2800x1720. Browsers cap how much canvas memory one page may
+   * hold, and past that cap `getContext` returns null. Throwing there took the
+   * whole resize down with it, so the surface went on growing while the scene
+   * stayed at the last size it managed.
+   */
+  function buildMark(): boolean {
+    const surface = canvas(width, height);
+    const ctx = surface.getContext("2d");
+    if (!ctx) return false;
+
     const texture = gpu.gpu.createTexture({
       label: "hero-mark",
       size: [width, height],
       format: "rg8unorm",
       usage: COPY_DST | TEXTURE_BINDING,
     });
-    const surface = canvas(width, height);
-    const ctx = surface.getContext("2d");
-    if (!ctx) throw new Error("hero: 2D context unavailable for the mark");
     const bytesPerRow = Math.ceil((width * 2) / 256) * 256;
     gpu.gpu.queue.writeTexture(
       { texture },
@@ -194,10 +209,15 @@ export function createHeroPipeline(options: {
       { bytesPerRow, rowsPerImage: height },
       [width, height],
     );
+
+    // Swap first, release second. Destroying up front meant that anything
+    // failing below it left both effects bound to a texture that no longer
+    // existed, and every frame after that failed validation.
+    mark?.destroy();
     mark = texture;
-    return texture;
+    return true;
   }
-  buildMark();
+  if (!buildMark()) throw new Error("hero: 2D context unavailable for the mark");
 
   const background = api.effect(gpu, options.shaders.background, { label: "hero-bg" });
   const rim = api.effect(gpu, options.shaders.rim, { label: "hero-rim" });
@@ -230,9 +250,10 @@ export function createHeroPipeline(options: {
   }
   bind();
 
-  function resize(nextWidth: number, nextHeight: number) {
+  function resize(nextWidth: number, nextHeight: number, nextDpr: number) {
     width = Math.max(1, Math.floor(nextWidth));
     height = Math.max(1, Math.floor(nextHeight));
+    dpr = Math.max(1, nextDpr);
     plate.resize([width, height]);
     rimTarget.resize([width, height]);
     rimA.resize([width, height]);
@@ -241,22 +262,9 @@ export function createHeroPipeline(options: {
     bind();
   }
 
-  /**
-   * Board cell size in backing pixels.
-   *
-   * Fixed at 12x20 the board had four enormous columns on a phone and almost no
-   * line could fit. Scaling with the short edge keeps roughly the same number
-   * of columns at every size, so the field reads the same on a 390px screen as
-   * on a desktop.
-   */
-  function cellSize(): [number, number] {
-    const scale = Math.max(0.58, Math.min(1, Math.min(width, height) / 820));
-    return [12 * scale, 20 * scale];
-  }
-
   function render(frame: HeroFrame) {
     const reference = Math.min(width, height);
-    const cell = cellSize();
+    const cell = boardCellSize(width, height, dpr);
     const usable = usableLineCount(width / cell[0]);
     // The reference measures distance in units of the short edge, so a wide
     // viewport does not stretch the halo into an ellipse.

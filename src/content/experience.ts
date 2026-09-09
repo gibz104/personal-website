@@ -13,15 +13,40 @@ export type Position = {
   company: string;
   where: string;
   period: string;
-  /** Most recent first. */
+  /**
+   * First month here, as YYYY-MM. The Work page counts the years of experience
+   * from the earliest of these, so the headline stays right on its own instead
+   * of needing an edit every January.
+   */
+  startedAt: string;
   roles: Role[];
 };
 
 export const EXPERIENCE: Position[] = [
   {
+    company: "Google",
+    where: "Chicago, IL",
+    period: "2026 – Present",
+    startedAt: "2026-09",
+    roles: [
+      {
+        title: "Data Program Manager, Finance Data and Analytics",
+        period: "Sep 2026 – Present",
+        // Written from the role rather than from results, because there are
+        // not any yet. Replace these with what actually happened once it has.
+        points: [
+          "Work with Finance teams on what they need to know, and build the reporting, dashboards and models that answer it.",
+          "Sit with data engineers and BI analysts through delivery: requirements, design, testing, and the data quality and access controls that decide whether anyone trusts the result.",
+          "Same ground I covered at Kraft Heinz, from the other side. Finance is the domain this time and the data platform is the job.",
+        ],
+      },
+    ],
+  },
+  {
     company: "Kraft Heinz",
     where: "Chicago, IL",
     period: "2016 – 2025",
+    startedAt: "2016-05",
     roles: [
       {
         title: "Staff Technical Specialist",
@@ -50,7 +75,7 @@ export const EXPERIENCE: Position[] = [
         ],
       },
       {
-        title: "IT Manager — Data Platform & Analytics",
+        title: "IT Manager, Data Platform & Analytics",
         period: "Oct 2019 – Oct 2021",
         points: [
           "Implemented Workday Adaptive Planning for the global HR community: budgeting, forecast, bonus accrual and executive reporting models used in every region.",
@@ -59,7 +84,7 @@ export const EXPERIENCE: Position[] = [
         ],
       },
       {
-        title: "Finance Manager — Oscar Mayer",
+        title: "Finance Manager, Oscar Mayer",
         period: "May – Oct 2019",
         points: [
           "Ran P&L reporting, forecasting and pricing analytics for the $1B Bacon and Hot Dog businesses.",
@@ -85,3 +110,23 @@ export const EXPERIENCE: Position[] = [
     ],
   },
 ];
+
+/**
+ * Whole years since the earliest job on record.
+ *
+ * The pages are prerendered, so this is fixed at build time rather than being
+ * live to the day. That is the right granularity for a number measured in
+ * years, and every deploy brings it current.
+ */
+export function careerYears(now: Date = new Date()): number {
+  const earliest = EXPERIENCE.reduce(
+    (min, position) => (position.startedAt < min ? position.startedAt : min),
+    EXPERIENCE[0]!.startedAt,
+  );
+  const [year, month] = earliest.split("-").map(Number) as [number, number];
+  const months = (now.getFullYear() - year) * 12 + (now.getMonth() + 1 - month);
+  return Math.max(0, Math.floor(months / 12));
+}
+
+/** Distinct employers on the page. */
+export const COMPANY_COUNT = new Set(EXPERIENCE.map((p) => p.company)).size;

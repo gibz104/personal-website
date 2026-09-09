@@ -56,14 +56,20 @@ export function SiteNav() {
         revealed ? "opacity-100" : "opacity-0"
       }`}
     >
-      <div className="mx-auto flex max-w-[104rem] items-center justify-between gap-6 px-5 py-5 sm:px-8">
+      {/* Every metric here tightens below sm. At its desktop size this bar
+          measured 300px of nav against a 320px screen: its right edge landed at
+          364, taking both social icons off screen, and 360 — the width of a
+          great many Android phones — was clipped too. Scaling it down keeps
+          every destination reachable at every width, which is a better trade
+          than hiding two of them on small screens. */}
+      <div className="mx-auto flex max-w-[104rem] items-center justify-between gap-3 px-4 py-5 sm:gap-6 sm:px-8">
         {isHome ? (
           <span />
         ) : (
           <Link
             href="/"
             aria-label="Home"
-            className="over-field pointer-events-auto font-mono text-sm font-semibold tracking-[0.12em] text-muted transition-colors hover:text-text"
+            className="over-field pointer-events-auto font-mono text-[0.8125rem] font-semibold tracking-[0.12em] text-muted transition-colors hover:text-text sm:text-sm"
           >
             RG
           </Link>
@@ -77,7 +83,7 @@ export function SiteNav() {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`rounded-full px-3 py-1.5 font-mono text-[0.6875rem] tracking-[0.16em] uppercase transition-colors ${
+                className={`rounded-full px-2 py-1.5 font-mono text-[0.625rem] tracking-[0.16em] uppercase transition-colors sm:px-3 sm:text-[0.6875rem] ${
                   active ? "text-text" : "text-dim hover:text-muted"
                 }`}
               >

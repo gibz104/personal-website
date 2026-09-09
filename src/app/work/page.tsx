@@ -1,27 +1,42 @@
 import { Presence } from "@/components/presence";
-import { EXPERIENCE } from "@/content/experience";
+import { careerYears, COMPANY_COUNT, EXPERIENCE } from "@/content/experience";
 
 export const metadata = {
   title: "Work",
-  description: "Nine years at Kraft Heinz, from financial analyst to data engineer.",
+  description:
+    "Finance, data and analytics: nine years at Kraft Heinz, and now Finance Data and Analytics at Google.",
 };
 
+const WORDS = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+  "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+  "sixteen", "seventeen", "eighteen", "nineteen", "twenty",
+];
+
+/** Spelled out to twenty, numerals past it. A headline reads badly with digits in it. */
+function spell(n: number): string {
+  return WORDS[n] ?? String(n);
+}
+
 export default function WorkPage() {
+  const years = careerYears();
+
   return (
     <>
       <Presence value={0.9} />
       <div aria-hidden className="veil" />
 
-      <main className="relative z-10 mx-auto min-h-svh max-w-3xl px-6 pb-28 pt-28 sm:px-8 sm:pt-32">
+      <main className="relative z-10 mx-auto min-h-svh max-w-3xl px-6 pb-44 pt-28 sm:px-8 sm:pb-52 sm:pt-32">
         <header className="mb-16">
           <p className="tag">Work</p>
+          {/* Both numbers come from the data below, so the headline cannot go
+              stale while the list underneath it grows. */}
           <h1 className="mt-5 max-w-2xl text-[clamp(1.75rem,4.5vw,2.75rem)] font-medium leading-[1.1] tracking-[-0.03em]">
-            Nine years at one company, and seven different jobs inside it.
+            {spell(years).charAt(0).toUpperCase() + spell(years).slice(1)} years
+            of experience across finance, data, and analytics at{" "}
+            {spell(COMPANY_COUNT)}{" "}
+            {COMPANY_COUNT === 1 ? "company" : "companies"}.
           </h1>
-          <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-muted">
-            I joined to do finance and left doing data engineering. The line
-            between those two turned out to be much blurrier than I was told.
-          </p>
         </header>
 
         {EXPERIENCE.map((position) => (

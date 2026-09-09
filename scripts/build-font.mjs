@@ -14,8 +14,8 @@ import { PNG } from "pngjs";
 const FIRST = 32;
 const LAST = 126;
 const COUNT = LAST - FIRST + 1; // 95 printable ASCII
-const CELL_W = 12;
-const CELL_H = 20;
+const CELL_W = 18;
+const CELL_H = 30;
 const COLS = 16;
 const ROWS = Math.ceil(COUNT / COLS); // 6
 const W = CELL_W * COLS;
@@ -26,7 +26,7 @@ const ctx = canvas.getContext("2d");
 ctx.fillStyle = "#000";
 ctx.fillRect(0, 0, W, H);
 ctx.fillStyle = "#fff";
-ctx.font = '16px Menlo, monospace';
+ctx.font = '24px Menlo, monospace';
 ctx.textBaseline = "alphabetic";
 
 for (let i = 0; i < COUNT; i++) {
@@ -37,7 +37,7 @@ for (let i = 0; i < COUNT; i++) {
   // Centre horizontally in the cell; sit the baseline so ascenders and
   // descenders both clear the cell edges.
   const x = col * CELL_W + (CELL_W - metrics.width) / 2;
-  const y = row * CELL_H + CELL_H - 5;
+  const y = row * CELL_H + CELL_H - 7;
   ctx.fillText(ch, x, y);
 }
 
@@ -53,6 +53,11 @@ writeFileSync(
 //
 // ${COUNT} printable ASCII glyphs (${FIRST}..${LAST}) rasterised from Menlo into a
 // ${COLS}x${ROWS} grid of ${CELL_W}x${CELL_H} cells. One byte of coverage per texel.
+//
+// Cells are sized for a 2x display: the board draws 9x15 CSS pixels per cell, so
+// on a retina screen that is exactly one atlas texel per device pixel, and on a
+// 1x screen it minifies cleanly. Sizing the atlas for 1x instead would leave
+// every retina visitor reading magnified, blurry glyphs.
 
 export const FONT_FIRST_CHAR = ${FIRST};
 export const FONT_CHAR_COUNT = ${COUNT};

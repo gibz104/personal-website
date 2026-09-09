@@ -10,6 +10,8 @@
     "sync": "tsx scripts/sync-github.ts",
     "check:shaders": "node scripts/check-shaders.mjs",
     "build:font": "node scripts/build-font.mjs",
+    "build:icon": "tsx scripts/build-icon.mts",
+    "build:portrait": "tsx scripts/build-portrait.mts",
     "preview:hero": "tsx scripts/preview-hero.mts",
     "verify:lines": "tsx scripts/verify-lines.mts",
     "check": "npm run check:shaders && npm run verify:lines && npx tsc --noEmit && npx eslint .",

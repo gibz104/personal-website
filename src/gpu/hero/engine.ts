@@ -19,11 +19,31 @@ export type HeroEngine = {
   setFace(face: MarkFace): Promise<void>;
   /** How present the scene should be, 0..1. Eased, never snapped. */
   setPresence(value: number): void;
+  /**
+   * Whether the light follows the pointer and the phone's tilt.
+   *
+   * Turned off behind a page of prose. The light chasing the cursor is the
+   * point on the home page and a distraction anywhere someone is reading:
+   * every scroll drags the glow across the words. Off, the source keeps its
+   * own slow drift, so the scene is still alive — it just stops answering.
+   */
+  setInteractive(value: boolean): void;
   dispose(): void;
 };
 
 /** How long the scene runs before a reduced-motion viewer's frame is frozen. */
 const SETTLE_SECONDS = 6;
+
+/**
+ * The ratio the surface is drawn at, capped at 2.
+ *
+ * Above 2 the extra pixels cost real frame time and buy nothing anyone can
+ * see. The cap has to match the surface's own `dpr: [1, 2]`, or the board
+ * would size its cells for a ratio the surface never renders at.
+ */
+function currentDpr(): number {
+  return Math.min(window.devicePixelRatio || 1, 2);
+}
 
 /**
  * Waits for a face's file before anything is rasterised.
@@ -56,9 +76,12 @@ export function createHeroEngine(
   let output: Surface | undefined;
   let pipeline: HeroPipeline | undefined;
   let raf = 0;
+  let sizeRaf = 0;
   let observer: ResizeObserver | undefined;
+  let densityQuery: MediaQueryList | undefined;
 
   let css = { width: 1, height: 1 };
+  let appliedDpr = 0;
   let pointer: [number, number] = [0, 0];
   let pointerActive = 0;
   let pointerGoal = 0;
@@ -71,6 +94,7 @@ export function createHeroEngine(
   let tilt: [number, number] | undefined;
   let orientationBound = false;
   let intro = 0;
+  let interactive = true;
   let presence = 1;
   let presenceGoal = 1;
   let elapsed = 0;
@@ -89,17 +113,64 @@ export function createHeroEngine(
   function applySize() {
     if (disposed || !output || !pipeline) return;
     measure();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = currentDpr();
     const width = Math.max(1, Math.round(css.width * dpr));
     const height = Math.max(1, Math.round(css.height * dpr));
-    if (output.size[0] === width && output.size[1] === height) return;
+    // The ratio is part of the condition: browser zoom can halve the CSS box
+    // and double the ratio in one step, leaving the backing size identical.
+    // Comparing pixels alone, the board would keep cells sized for the old
+    // ratio and the page would render at half the intended size.
+    if (output.size[0] === width && output.size[1] === height && appliedDpr === dpr) {
+      return;
+    }
+    appliedDpr = dpr;
     output.resize([width, height]);
-    pipeline.resize(output.size[0], output.size[1]);
+    pipeline.resize(output.size[0], output.size[1], dpr);
+  }
+
+  /**
+   * Coalesces a burst of resize events into one apply per frame.
+   *
+   * A ResizeObserver fires for every step of a window drag, and each apply
+   * re-rasterises the mark and uploads a texture the size of the viewport.
+   * Doing that dozens of times a second is what makes a drag stutter, and it
+   * is enough canvas allocation to run a browser out of the memory it will
+   * hand to 2D contexts. One apply per frame is all a drag can show anyway.
+   */
+  function scheduleSize() {
+    if (disposed || sizeRaf) return;
+    sizeRaf = requestAnimationFrame(() => {
+      sizeRaf = 0;
+      applySize();
+    });
+  }
+
+  /**
+   * Re-applies when the pixel ratio changes on its own.
+   *
+   * A ResizeObserver only sees the CSS box, and the ratio can change without
+   * it moving: drag a window from a retina display to an external monitor and
+   * the box is identical while every pixel behind it just halved. Nothing
+   * would call applySize, so the scene would keep drawing at the old density
+   * until something else happened to resize it. matchMedia is the only event
+   * for this, and the query has to be rebuilt each time because it can only
+   * ask about one exact ratio.
+   */
+  const onDensityChange = () => {
+    scheduleSize();
+    watchDensity();
+  };
+
+  function watchDensity() {
+    densityQuery?.removeEventListener("change", onDensityChange);
+    densityQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    densityQuery.addEventListener("change", onDensityChange);
   }
 
   const onPointerMove = (event: PointerEvent) => {
+    if (!interactive) return;
     const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = currentDpr();
     pointer = [(event.clientX - rect.left) * dpr, (event.clientY - rect.top) * dpr];
     pointerGoal = 1;
     // A real touch outranks the gyroscope for as long as it lasts.
@@ -110,6 +181,7 @@ export function createHeroEngine(
   };
 
   const onOrientation = (event: DeviceOrientationEvent) => {
+    if (!interactive) return;
     const { beta, gamma } = event;
     if (beta === null || gamma === null) return;
     // gamma is the left-right roll; beta the front-back pitch, which sits near
@@ -195,6 +267,7 @@ export function createHeroEngine(
       },
       preset: variant.preset,
       face,
+      dpr: currentDpr(),
       gridSeed,
     });
     applySize();
@@ -214,8 +287,9 @@ export function createHeroEngine(
       }
     }
 
-    observer = new ResizeObserver(applySize);
+    observer = new ResizeObserver(scheduleSize);
     observer.observe(canvas);
+    watchDensity();
     raf = requestAnimationFrame(tick);
     return true;
   }
@@ -230,6 +304,16 @@ export function createHeroEngine(
     setPresence(value) {
       presenceGoal = Math.max(0, Math.min(1, value));
     },
+    setInteractive(value) {
+      interactive = value;
+      if (value) return;
+      // Hand the light back to its drift rather than leaving it parked
+      // wherever the cursor happened to be when the route changed. The ease on
+      // pointerActive carries it there over about a fifth of a second, so the
+      // page arrives without a jump.
+      pointerGoal = 0;
+      tilt = undefined;
+    },
     async setFace(next) {
       await loadFace(next);
       if (!disposed) pipeline?.setFace(next);
@@ -238,7 +322,9 @@ export function createHeroEngine(
       if (disposed) return;
       disposed = true;
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(sizeRaf);
       observer?.disconnect();
+      densityQuery?.removeEventListener("change", onDensityChange);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("touchstart", bindOrientation);
       window.removeEventListener("deviceorientation", onOrientation);

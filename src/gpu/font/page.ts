@@ -78,6 +78,31 @@ export function buildCorpusTexture(): Uint8Array<ArrayBuffer> {
   return data;
 }
 
+/**
+ * Board cell size, in backing pixels.
+ *
+ * Defined in CSS pixels and multiplied by the device pixel ratio. Sizing it in
+ * backing pixels made every character twice as large on a 1x display as on a
+ * retina one, because the same texel count covers twice the physical area. The
+ * atlas is drawn at 18x30 so 9x15 CSS lands exactly one texel per device pixel
+ * at 2x.
+ *
+ * The mild shrink on small screens buys back columns, so a phone gets a denser
+ * grid rather than a handful of wide ones.
+ *
+ * Exported because `scripts/verify-lines.mts` needs the same numbers. A copy in
+ * the test would silently drift and start checking a board nobody renders.
+ */
+export function boardCellSize(
+  width: number,
+  height: number,
+  dpr: number,
+): [number, number] {
+  const cssShort = Math.min(width, height) / Math.max(1, dpr);
+  const shrink = Math.max(0.80, Math.min(1, cssShort / 620));
+  return [9 * shrink * dpr, 15 * shrink * dpr];
+}
+
 /** Realised language mix, weighted by line length — the share of the page. */
 export function measureCorpus(): Record<string, number> {
   const counts: Record<string, number> = {};

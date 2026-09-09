@@ -11,7 +11,9 @@ import { createCanvas } from "@napi-rs/canvas";
 import { resolveShader } from "@vgpu/wgsl/runtime";
 import * as node from "vgpu/node";
 import {
+  boardCellSize,
   buildCorpusTexture,
+  CORPUS_COUNT,
   CORPUS_HEIGHT,
   CORPUS_WIDTH,
   measureCorpus,
@@ -21,11 +23,24 @@ import { CODE_LINES } from "../src/gpu/font/corpus";
 
 void createCanvas;
 
-const VIEWPORTS: readonly (readonly [number, number])[] = [
-  [390, 844],
-  [768, 1024],
-  [1440, 900],
-  [2560, 1440],
+/**
+ * Viewport in backing pixels, and the device pixel ratio behind it.
+ *
+ * The small end matters as much as the large: 320 CSS pixels is still a phone
+ * in use, and landscape puts the short edge at 390, which is what the cell
+ * shrink keys off. A board that places a clipped line there is as broken as
+ * one that does it on a desktop.
+ */
+const VIEWPORTS: readonly (readonly [number, number, number])[] = [
+  [320, 568, 1],
+  [640, 1136, 2],
+  [844, 390, 1],
+  [390, 844, 1],
+  [780, 1688, 2],
+  [768, 1024, 1],
+  [1440, 900, 1],
+  [2880, 1800, 2],
+  [2560, 1440, 1],
 ];
 const TIMES = [0, 3.5, 11, 29, 52, 87, 140, 233];
 
@@ -51,13 +66,21 @@ gpu.gpu.queue.writeTexture(
 let failures = 0;
 let rowsChecked = 0;
 let linesChecked = 0;
+const fits: string[] = [];
 
-for (const [vw, vh] of VIEWPORTS) {
-  const scale = Math.max(0.58, Math.min(1, Math.min(vw, vh) / 820));
-  const cell: [number, number] = [12 * scale, 20 * scale];
+for (const [vw, vh, dpr] of VIEWPORTS) {
+  const cell = boardCellSize(vw, vh, dpr);
   const cols = Math.floor(vw / cell[0]);
   const rows = Math.floor(vh / cell[1]);
   const usable = usableLineCount(vw / cell[0]);
+  // A viewport too narrow for any line leaves the board as pure cipher with no
+  // readable code in it. That is a rendering the site should never ship, so it
+  // is reported here rather than passing silently for want of anything to check.
+  if (usable === 0) {
+    failures++;
+    console.log(`  no line fits ${vw}x${vh} @${dpr}x (${cols} columns)`);
+  }
+  fits.push(`${vw}x${vh}@${dpr}x ${cols}x${rows} cells, ${usable}/${CORPUS_COUNT} lines fit`);
 
   // One pixel per cell: sample the centre of each cell exactly.
   const target = node.target(gpu, { size: [cols, rows], format: "rgba8unorm" });
@@ -135,6 +158,8 @@ for (const [vw, vh] of VIEWPORTS) {
 
 await gpu.settled();
 gpu.dispose();
+
+for (const line of fits) console.log(`  ${line}`);
 
 const mix = measureCorpus();
 console.log(

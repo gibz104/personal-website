@@ -4,7 +4,7 @@ import { PROFILE } from "@/content/profile";
 export default function HomePage() {
   return (
     <>
-      <Presence value={1} />
+      <Presence value={1} interactive />
 
       {/*
         The scene is the page. The canvas is decorative and marked aria-hidden,
@@ -13,7 +13,7 @@ export default function HomePage() {
         accessibility tree along with everything else.
       */}
       <h1 className="sr-only">
-        {PROFILE.name} — {PROFILE.tagline}
+        {PROFILE.name} · {PROFILE.tagline}
       </h1>
     </>
   );

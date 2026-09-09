@@ -3,15 +3,22 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createHeroEngine, type HeroEngine } from "@/gpu/hero/engine";
 
+/** How the scene should behave behind the route that is mounted. */
+export type SceneMood = {
+  /** How present the scene should be, 0..1. */
+  presence: number;
+  /** Whether the light follows the pointer and the phone's tilt. */
+  interactive: boolean;
+};
+
 type SceneControl = {
   status: "pending" | "running" | "unsupported";
-  /** How present the scene should be behind the current route, 0..1. */
-  setPresence(value: number): void;
+  setMood(mood: SceneMood): void;
 };
 
 const SceneContext = createContext<SceneControl>({
   status: "pending",
-  setPresence: () => {},
+  setMood: () => {},
 });
 
 export function useScene(): SceneControl {
@@ -28,7 +35,7 @@ export function useScene(): SceneControl {
 export function SceneProvider({ children }: { children: React.ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<HeroEngine | null>(null);
-  const pendingRef = useRef(1);
+  const pendingRef = useRef<SceneMood>({ presence: 1, interactive: true });
   const [status, setStatus] = useState<SceneControl["status"]>("pending");
 
   useEffect(() => {
@@ -38,7 +45,8 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
     const engine = createHeroEngine(canvas, "flare");
     engineRef.current = engine;
     // Apply whatever the first route asked for before the GPU finished booting.
-    engine.setPresence(pendingRef.current);
+    engine.setPresence(pendingRef.current.presence);
+    engine.setInteractive(pendingRef.current.interactive);
 
     let cancelled = false;
     void engine.ready.then((ok) => {
@@ -55,9 +63,10 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<SceneControl>(
     () => ({
       status,
-      setPresence(next) {
+      setMood(next) {
         pendingRef.current = next;
-        engineRef.current?.setPresence(next);
+        engineRef.current?.setPresence(next.presence);
+        engineRef.current?.setInteractive(next.interactive);
       },
     }),
     [status],
@@ -71,10 +80,10 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Declares how present the scene should be for the current route. */
-export function usePresence(value: number) {
-  const { setPresence } = useScene();
+/** Declares how the scene should behave for the current route. */
+export function useSceneMood(presence: number, interactive: boolean) {
+  const { setMood } = useScene();
   useEffect(() => {
-    setPresence(value);
-  }, [setPresence, value]);
+    setMood({ presence, interactive });
+  }, [setMood, presence, interactive]);
 }

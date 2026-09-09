@@ -116,6 +116,21 @@ body {
   }
 }
 
+/* For the few controls that sit directly on the character board rather than
+   behind the veil — on the home page there is no veil at all, and a nav link
+   landing on a bright run of syntax loses its edges. A shadow rather than a
+   plate: a panel behind the bar would announce itself as chrome, which is the
+   one thing this nav is trying not to be. */
+.over-field {
+  text-shadow:
+    0 0 3px rgba(4, 5, 10, 0.9),
+    0 1px 14px rgba(4, 5, 10, 0.85);
+}
+
+.over-field svg {
+  filter: drop-shadow(0 0 3px rgba(4, 5, 10, 0.95));
+}
+
 /* Small caps label used for every piece of metadata on the site. */
 .tag {
   font-family: var(--font-mono);
