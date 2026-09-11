@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SceneProvider } from "@/components/scene-provider";
 import { SiteNav } from "@/components/site-nav";
@@ -72,6 +73,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteNav />
           {children}
         </SceneProvider>
+        {/* Cookieless page counts. Last in the body so it never sits between
+            the scene and the content in the paint order. */}
+        <Analytics />
       </body>
     </html>
   );
