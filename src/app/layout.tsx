@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SceneProvider } from "@/components/scene-provider";
 import { SiteNav } from "@/components/site-nav";
@@ -73,9 +74,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteNav />
           {children}
         </SceneProvider>
-        {/* Cookieless page counts. Last in the body so it never sits between
-            the scene and the content in the paint order. */}
+        {/* Cookieless page counts and Core Web Vitals. Last in the body so
+            neither sits between the scene and the content in the paint order.
+            Both 404 under `next start`: their endpoints are served by Vercel's
+            edge, not by the app, so those console errors are expected locally. */}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
